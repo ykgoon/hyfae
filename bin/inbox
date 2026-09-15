@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Tier C intake — paste a walled-platform excerpt (file or stdin), then process.
+# Usage: bin/inbox <source-name> [file]        # stores paste only
+#        PROCESS=1 bin/inbox <source-name> f   # also run extraction (provider via $2/PROVIDER)
+set -euo pipefail
+cd "$(dirname "$0")/.."
+NAME="${1:?usage: bin/inbox <source-name> [file] — stdin if no file}"
+FILE="${2:-}"
+LANG_="${INBOX_LANG:-ms}"
+MARKET="${INBOX_MARKET:-MY}"
+if [ -n "$FILE" ]; then TEXT="$(cat "$FILE")"; else TEXT="$(cat)"; fi
+jq -n --arg n "$NAME" --arg t "$TEXT" --arg l "$LANG_" --arg m "$MARKET" \
+  '{sourceName:$n, text:$t, language:$l, market:$m}' \
+  | swamp model method run sources ingest_paste --stdin
+if [ "${PROCESS:-0}" = "1" ]; then
+  swamp workflow run process-inbox --input "provider=${PROVIDER:-openrouter}"
+fi

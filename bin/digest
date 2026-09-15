@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Export the weekly digest markdown. Usage: bin/digest [week]  (default: latest)
+set -euo pipefail
+cd "$(dirname "$0")/.."
+WEEK="${1:-}"
+OUT="reports"
+mkdir -p "$OUT"
+if [ -n "$WEEK" ]; then
+  swamp data get records "digest-$WEEK" --json | jq -r '.content.markdown' > "$OUT/weekly-$WEEK.md"
+  echo "wrote $OUT/weekly-$WEEK.md"
+else
+  NAME="$(swamp data list records --json | jq -r '[.[] | select(.name | startswith("digest-"))] | max_by(.version) | .name' 2>/dev/null || true)"
+  # data list lists versions per name; fall back to querying all digests
+  if [ -z "$NAME" ] || [ "$NAME" = "null" ]; then
+    NAME="$(swamp data query 'modelName == "records" && name.startsWith("digest-")' --json \
+      | jq -r '[.results[]] | max_by(.createdAt) | .name')"
+  fi
+  swamp data get records "$NAME" --json | jq -r '.content.markdown' > "$OUT/$NAME.md"
+  echo "wrote $OUT/$NAME.md"
+fi

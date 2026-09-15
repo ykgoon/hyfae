@@ -1,0 +1,7 @@
+id: f6ece111-b2b9-4f9a-b1aa-da2eef260ddf
+name: llm-secrets
+type: local_encryption
+config:
+  auto_generate: true
+  base_dir: /home/ykgoon/opportunists
+createdAt: '2026-09-15T01:05:51.961Z'

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Two-gesture feedback on a card. Usage: bin/feedback <card-id> <escalate|dismiss> ["reason"] [assumptionBroken:true|false]
+set -euo pipefail
+cd "$(dirname "$0")/.."
+CARD="${1:?usage: bin/feedback <card-id> <escalate|dismiss> [reason] [assumption_broken]}"
+DECISION="${2:?escalate|dismiss}"
+REASON="${3:-}"
+BROKEN="${4:-false}"
+NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+RECORD="$(printf '{"id":"fb-%s-%s","cardId":"card-%s","decision":"%s","reason":"%s","assumptionBroken":%s,"at":"%s"}' \
+  "$(echo "$CARD" | tr -c 'a-z0-9' '-' | cut -c1-20)" "$NOW" "$CARD" "$DECISION" "$REASON" "$BROKEN" "$NOW")"
+jq -n --arg k feedback --argjson r "$RECORD" '{kind:$k, records:[$r]}' \
+| swamp model method run records ingest --stdin

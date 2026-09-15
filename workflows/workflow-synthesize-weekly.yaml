@@ -1,0 +1,289 @@
+id: 1c7efcf2-8493-449a-9dc0-867f8e735bbd
+name: synthesize-weekly
+description: >-
+  Loops 3+4 — constraint-satisfying recombination (synthesizer) followed by
+  two-gate falsification (critic: prior art + unawareness + durability), then
+  deterministic card promotion (cap 3/week) and weekly digest markdown.
+tags:
+  loop: "3-4"
+  cadence: weekly
+trigger:
+  schedule: "0 8 * * 6"
+  inputs:
+    provider: openrouter
+inputs:
+  properties:
+    provider:
+      type: string
+      enum: [openrouter, local, none]
+      default: openrouter
+      description: LLM backend for synthesis + falsification
+    week:
+      type: string
+      default: ""
+      description: ISO week label for the digest, e.g. 2026-W37; empty = current week
+  required: []
+jobs:
+  - name: render
+    description: Deterministic rendering of all stored tensions
+    steps:
+      - name: render-tensions
+        task:
+          type: model_method
+          modelIdOrName: records
+          methodName: render
+          inputs:
+            kind: tension
+            records: ${{ data.findBySpec("records", "tension") }}
+
+  - name: synthesize-openrouter
+    description: OpenRouter synthesis + falsification (guarded; skipped when provider=local)
+    dependsOn:
+      - job: render
+        condition:
+          type: succeeded
+    steps:
+      - name: synth
+        guard: ${{ inputs.provider != "openrouter" }}
+        task:
+          type: model_method
+          modelIdOrName: llm-openrouter
+          methodName: chat
+          inputs:
+            requestId: synth
+            temperature: 0.9
+            maxTokens: 4096
+            messages:
+              - role: system
+                content: >-
+                  You are the synthesis stage of an opportunity machine for
+                  Southeast Asia. Input: stored tensions with market invariants.
+
+
+                  Recombine mechanisms ACROSS domains via structural analogy:
+                  take a mechanism that works in context A, find a structurally
+                  isomorphic context B where it is absent. Constraint-satisfying,
+                  NOT random: you may freely violate solution-space assumptions
+                  (category creation lives there) but you are FORBIDDEN from
+                  violating market invariants (that is where corpses live). Every
+                  synthesis must carry a causalStructure attestation: same actors,
+                  same incentives, same constraint types — match=true only if you
+                  can argue the isomorphism.
+
+
+                  Ground ONLY in the input tensions (retrieval-anchored). If the
+                  store is thin, produce fewer, better syntheses.
+
+
+                  Output: ONLY a JSON array (no prose, no fences) of objects:
+                  id ("syn-" + short slug), tensionIds (from input),
+                  mechanismSourceDomain, mechanism,
+                  causalStructure {actors, incentives, constraintTypes, match, note},
+                  invariantViolations (array of strings, empty = attestation passes),
+                  createdByVersion ("synthesize-weekly.v1").
+                  Set falsification to placeholder values:
+                  falsification {priorArt: [], structuralBarriers: "pending",
+                  unawarenessAffirmative: "pending", unawarenessNegative: "pending",
+                  durability: "pending", verdict: "alive"}.
+                  Maximum 6 syntheses. If nothing qualifies, output [].
+              - role: user
+                content: ${{ data.latest("records", "render-tension").attributes.text }}
+      - name: falsify
+        dependsOn:
+          - step: synth
+            condition:
+              type: succeeded
+        task:
+          type: model_method
+          modelIdOrName: llm-openrouter
+          methodName: chat
+          inputs:
+            requestId: falsify
+            temperature: 0.3
+            maxTokens: 4096
+            messages:
+              - role: system
+                content: >-
+                  You are the falsification critic — a dedicated pessimist. The
+                  previous stage proposed candidate syntheses (JSON). Your job is
+                  to argue each one SHOULD NOT exist. Two gates per candidate:
+
+
+                  GATE 1 — existence: search your knowledge for prior attempts
+                  (startups, internal tooling, grey-market manual services,
+                  academic/standards work). List them as priorArt. Name the
+                  structural reason the gap persists.
+
+
+                  GATE 2 — unawareness + durability:
+                  - unawarenessAffirmative: why sufferers lack the frame
+                    (normalized friction, dispersed across parties, below
+                    job-description threshold).
+                  - unawarenessNegative: your someone-would-have-built-it sweep
+                    result, and whether the inefficiency is durable or a rounding
+                    error arbitrage closes the moment it is named.
+
+
+                  Durability test: could this plausibly support 20 customers at
+                  RM100/month? No → verdict "mirage" (reason too_small).
+
+
+                  verdict "alive" ONLY if it is too big to be trivial AND too
+                  invisible to be competed. Kill aggressively — ideas that
+                  survive are the only ones worth the operator's attention.
+
+
+                  Also score as the panel, one short line each, and flag
+                  convergedObvious=true when all four agree it is obvious in
+                  hindsight:
+                  panel {operator, economist, behaviorist, skeptic, convergedObvious}.
+
+
+                  Output: ONLY a JSON array of the SAME synthesis objects with
+                  falsification and panel filled in. Keep all other fields
+                  unchanged. If input was empty, output [].
+              - role: user
+                content: ${{ data.latest("llm-openrouter", "synth").attributes.choices[0].message.content }}
+      - name: store
+        dependsOn:
+          - step: falsify
+            condition:
+              type: succeeded
+        task:
+          type: model_method
+          modelIdOrName: records
+          methodName: ingest_text
+          inputs:
+            kind: synthesis
+            text: ${{ data.latest("llm-openrouter", "falsify").attributes.choices[0].message.content }}
+
+  - name: synthesize-local
+    description: Ollama synthesis + falsification (guarded; skipped when provider=openrouter)
+    dependsOn:
+      - job: render
+        condition:
+          type: succeeded
+    steps:
+      - name: synth
+        guard: ${{ inputs.provider != "local" }}
+        task:
+          type: model_method
+          modelIdOrName: llm-local
+          methodName: generate
+          inputs:
+            instanceName: synth
+            prompt: >-
+              You are the synthesis stage of an opportunity machine for
+              Southeast Asia. Input: stored tensions with market invariants.
+
+
+              Recombine mechanisms ACROSS domains via structural analogy:
+              take a mechanism that works in context A, find a structurally
+              isomorphic context B where it is absent. Constraint-satisfying,
+              NOT random: you may freely violate solution-space assumptions
+              (category creation lives there) but you are FORBIDDEN from
+              violating market invariants (that is where corpses live). Every
+              synthesis must carry a causalStructure attestation: same actors,
+              same incentives, same constraint types — match=true only if you
+              can argue the isomorphism.
+
+
+              Ground ONLY in the input tensions (retrieval-anchored). If the
+              store is thin, produce fewer, better syntheses.
+
+
+              Output: ONLY a JSON array (no prose, no fences) of objects:
+              id ("syn-" + short slug), tensionIds (from input),
+              mechanismSourceDomain, mechanism,
+              causalStructure {actors, incentives, constraintTypes, match, note},
+              invariantViolations (array of strings, empty = attestation passes),
+              createdByVersion ("synthesize-weekly.v1").
+              Set falsification to placeholder values:
+              falsification {priorArt: [], structuralBarriers: "pending",
+              unawarenessAffirmative: "pending", unawarenessNegative: "pending",
+              durability: "pending", verdict: "alive"}.
+              Maximum 6 syntheses. If nothing qualifies, output [].
+            input: ${{ data.latest("records", "render-tension").attributes.text }}
+      - name: falsify
+        dependsOn:
+          - step: synth
+            condition:
+              type: succeeded
+        task:
+          type: model_method
+          modelIdOrName: llm-local
+          methodName: generate
+          inputs:
+            instanceName: falsify
+            prompt: >-
+              You are the falsification critic — a dedicated pessimist. The
+              previous stage proposed candidate syntheses (JSON). Your job is
+              to argue each one SHOULD NOT exist. Two gates per candidate:
+
+
+              GATE 1 — existence: search your knowledge for prior attempts
+              (startups, internal tooling, grey-market manual services,
+              academic/standards work). List them as priorArt. Name the
+              structural reason the gap persists.
+
+
+              GATE 2 — unawareness + durability:
+              - unawarenessAffirmative: why sufferers lack the frame
+                (normalized friction, dispersed across parties, below
+                job-description threshold).
+              - unawarenessNegative: your someone-would-have-built-it sweep
+                result, and whether the inefficiency is durable or a rounding
+                error arbitrage closes the moment it is named.
+
+
+              Durability test: could this plausibly support 20 customers at
+              RM100/month? No → verdict "mirage" (reason too_small).
+
+
+              verdict "alive" ONLY if it is too big to be trivial AND too
+              invisible to be competed. Kill aggressively — ideas that
+              survive are the only ones worth the operator's attention.
+
+
+              Also score as the panel, one short line each, and flag
+              convergedObvious=true when all four agree it is obvious in
+              hindsight:
+              panel {operator, economist, behaviorist, skeptic, convergedObvious}.
+
+
+              Output: ONLY a JSON array of the SAME synthesis objects with
+              falsification and panel filled in. Keep all other fields
+              unchanged. If input was empty, output [].
+            input: ${{ data.latest("llm-local", "synth").attributes.raw }}
+      - name: store
+        dependsOn:
+          - step: falsify
+            condition:
+              type: succeeded
+        task:
+          type: model_method
+          modelIdOrName: records
+          methodName: ingest_text
+          inputs:
+            kind: synthesis
+            text: ${{ data.latest("llm-local", "falsify").attributes.raw }}
+
+  - name: promote
+    description: Deterministic cap-3 promotion + weekly digest markdown
+    dependsOn:
+      - job: synthesize-openrouter
+        condition:
+          type: completed
+      - job: synthesize-local
+        condition:
+          type: completed
+    steps:
+      - name: promote-cards
+        task:
+          type: model_method
+          modelIdOrName: records
+          methodName: promote
+          inputs:
+            candidates: ${{ data.findBySpec("records", "synthesis") }}
+            week: ${{ inputs.week }}
+version: 1

@@ -1,0 +1,12 @@
+type: '@sntxrr/openrouter'
+typeVersion: 2026.06.20.1
+id: f9d2668a-f031-4006-a594-a9a77b18d0f8
+name: llm-openrouter
+version: 1
+tags: {}
+globalArguments:
+  apiKey: ${{ vault.get(llm-secrets, OPENROUTER_API_KEY) }}
+  baseUrl: https://openrouter.ai/api/v1
+  defaultModel: google/gemini-2.0-flash-001
+  siteName: opportunity-machine
+methods: {}

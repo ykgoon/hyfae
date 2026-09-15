@@ -1,0 +1,31 @@
+{
+  "@sntxrr/openrouter": {
+    "version": "2026.06.20.1",
+    "pulledAt": "2026-09-14T09:34:56.609Z",
+    "files": [
+      ".swamp/bundles/f04bb4aa/openrouter.js",
+      ".swamp/pulled-extensions/@sntxrr/openrouter/files/LICENSE.md",
+      ".swamp/pulled-extensions/@sntxrr/openrouter/files/README.md",
+      ".swamp/pulled-extensions/@sntxrr/openrouter/manifest.yaml",
+      ".swamp/pulled-extensions/@sntxrr/openrouter/models/openrouter.ts"
+    ],
+    "checksum": "e8a9278e0a9794d9159b2423ee1720b123dd5f286068abb007a9caa81e016e0b",
+    "filesChecksum": "ac40b6f67a660e75de4f0188c2c8aa4216f22ae50be8fd6cb81b4419b308cc70",
+    "serverUrl": "https://swamp-club.com"
+  },
+  "@keeb/ollama": {
+    "version": "2026.07.18.1",
+    "pulledAt": "2026-09-14T09:35:31.083Z",
+    "files": [
+      ".agents/skills/ollama",
+      ".swamp/bundles/1c9a3049/ollama.js",
+      ".swamp/pulled-extensions/@keeb/ollama/files/LICENSE.txt",
+      ".swamp/pulled-extensions/@keeb/ollama/files/README.md",
+      ".swamp/pulled-extensions/@keeb/ollama/manifest.yaml",
+      ".swamp/pulled-extensions/@keeb/ollama/models/ollama.ts"
+    ],
+    "checksum": "97e808150ec8a89d5ab9e864d92850cda00427c10db06c99196ca92137f8d4a7",
+    "filesChecksum": "f5fb1a894e1ef22c991e669c685879bf89c1e6f46d02c7a2d1be3c1c81c095c1",
+    "serverUrl": "https://swamp-club.com"
+  }
+}

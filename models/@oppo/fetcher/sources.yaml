@@ -1,0 +1,63 @@
+type: '@oppo/fetcher'
+typeVersion: 2026.09.14.1
+id: 57fc545a-3b3f-4c47-93de-c42618be0e22
+name: sources
+version: 1
+tags: {}
+globalArguments:
+  maxCharsPerSource: 20000
+  sources:
+    # Regulatory watchers (Tier B, versioned, low-volume high-conviction)
+    - name: lhdn-einvois
+      url: https://www.hasil.gov.my/en/e-invois/
+      tier: B
+      language: en
+      market: MY
+      artifactClasses: [policy_shift]
+      extract: html
+    - name: bnm-notices
+      url: https://www.bnm.gov.my/notices
+      tier: B
+      language: en
+      market: MY
+      artifactClasses: [policy_shift]
+      extract: html
+    # App reviews (Tier A, wallets-open users filing free feature requests)
+    - name: appstore-reviews-shopee-my
+      url: https://itunes.apple.com/MY/rss/customerreviews/page=1/id=959841113/sortby=mostrecent/json
+      tier: A
+      language: en
+      market: MY
+      artifactClasses: [workaround, ritual]
+      extract: json
+    - name: appstore-reviews-tng-my
+      url: https://itunes.apple.com/MY/rss/customerreviews/page=1/id=1344696702/sortby=mostrecent/json
+      tier: A
+      language: en
+      market: MY
+      artifactClasses: [workaround, queue]
+      extract: json
+    # Local-language forum surface (Tier A, workaround culture)
+    - name: lowyat-network
+      url: https://www.lowyat.net/
+      tier: A
+      language: ms
+      market: MY
+      artifactClasses: [workaround, grey_market]
+      extract: html
+    # Crypto edge (Tier A, public ticker — price asymmetry between corridors)
+    - name: luno-ticker-ethmyr
+      url: https://api.luno.com/api/1/ticker?pair=ETHMYR
+      tier: A
+      language: en
+      market: MY
+      artifactClasses: [price_asymmetry]
+      extract: json
+    - name: luno-ticker-xbtmyr
+      url: https://api.luno.com/api/1/ticker?pair=XBTMYR
+      tier: A
+      language: en
+      market: MY
+      artifactClasses: [price_asymmetry]
+      extract: json
+methods: {}

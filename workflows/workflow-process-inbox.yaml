@@ -1,0 +1,148 @@
+id: 1db4b575-89f4-496c-adb4-eb0100c1c63c
+name: process-inbox
+description: >-
+  Tier C human-mediated path — converts pasted inbox excerpts (stored as pages
+  via fetcher.ingest_paste) into observations. Same collector contract as
+  collect-daily; never automates walled platforms, only processes what the
+  operator manually pasted.
+tags:
+  loop: "1"
+  cadence: manual
+inputs:
+  properties:
+    provider:
+      type: string
+      enum: [openrouter, local, none]
+      default: openrouter
+      description: LLM backend for the extraction pass
+  required: []
+jobs:
+  - name: render
+    description: Deterministic rendering of all pasted pages
+    steps:
+      - name: render-pages
+        task:
+          type: model_method
+          modelIdOrName: sources
+          methodName: render_pages
+          inputs:
+            records: ${{ data.findBySpec("sources", "page") }}
+
+  - name: extract-openrouter
+    description: OpenRouter extraction pass (guarded; skipped when provider=local)
+    dependsOn:
+      - job: render
+        condition:
+          type: succeeded
+    steps:
+      - name: llm
+        guard: ${{ inputs.provider != "openrouter" }}
+        task:
+          type: model_method
+          modelIdOrName: llm-openrouter
+          methodName: chat
+          inputs:
+            requestId: inbox
+            temperature: 0.4
+            maxTokens: 4096
+            messages:
+              - role: system
+                content: >-
+                  You are the collector stage of an opportunity-scouting machine
+                  focused on Southeast Asia (MY/ID/TH/VN/PH). Input: raw pasted
+                  excerpts from walled platforms (Facebook groups, Telegram,
+                  WhatsApp). Extract OBSERVATIONS of friction behavior —
+                  workarounds, grey markets, queues, hiring duct-tape,
+                  price asymmetries, rituals.
+
+
+                  Hard rules:
+                  - rawExcerpt MUST be a verbatim quote in the original language. Never translate.
+                  - Zero invention: only what the excerpt shows.
+                  - economic gravity is mandatory: touchpoint
+                    (transaction | compliance | labor), monthlyCostEst in
+                    MYR-equivalent, evidence citing the excerpt, independentSources count.
+                  - Drop anything with no plausible money in motion.
+                  - firstSeen: today's date, ISO. collectorVersion: "process-inbox.v1".
+
+                  Output: ONLY a JSON array (no prose, no fences) of objects with
+                  exactly these fields:
+                  id ("obs-" + short slug of sourceName + hash of excerpt),
+                  sourceName, sourceRef, tier ("C"), rawExcerpt, language, market,
+                  artifactClass (workaround|grey_market|queue|hire_ducttape|price_asymmetry|ritual|policy_shift|other),
+                  actor, workflow, friction,
+                  gravity {touchpoint, monthlyCostEst, evidence, independentSources},
+                  firstSeen, collectorVersion.
+                  Maximum 10 observations, only the strongest. If nothing qualifies, output [].
+              - role: user
+                content: ${{ data.latest("sources", "render-page").attributes.text }}
+      - name: store
+        dependsOn:
+          - step: llm
+            condition:
+              type: succeeded
+        task:
+          type: model_method
+          modelIdOrName: records
+          methodName: ingest_text
+          inputs:
+            kind: observation
+            text: ${{ data.latest("llm-openrouter", "inbox").attributes.choices[0].message.content }}
+
+  - name: extract-local
+    description: Ollama extraction pass (guarded; skipped when provider=openrouter)
+    dependsOn:
+      - job: render
+        condition:
+          type: succeeded
+    steps:
+      - name: llm
+        guard: ${{ inputs.provider != "local" }}
+        task:
+          type: model_method
+          modelIdOrName: llm-local
+          methodName: generate
+          inputs:
+            instanceName: inbox
+            prompt: >-
+              You are the collector stage of an opportunity-scouting machine
+              focused on Southeast Asia (MY/ID/TH/VN/PH). Input: raw pasted
+              excerpts from walled platforms (Facebook groups, Telegram,
+              WhatsApp). Extract OBSERVATIONS of friction behavior —
+              workarounds, grey markets, queues, hiring duct-tape,
+              price asymmetries, rituals.
+
+
+              Hard rules:
+              - rawExcerpt MUST be a verbatim quote in the original language. Never translate.
+              - Zero invention: only what the excerpt shows.
+              - economic gravity is mandatory: touchpoint
+                (transaction | compliance | labor), monthlyCostEst in
+                MYR-equivalent, evidence citing the excerpt, independentSources count.
+              - Drop anything with no plausible money in motion.
+              - firstSeen: today's date, ISO. collectorVersion: "process-inbox.v1".
+
+
+              Output: ONLY a JSON array (no prose, no fences) of objects with
+              exactly these fields:
+              id ("obs-" + short slug of sourceName + hash of excerpt),
+              sourceName, sourceRef, tier ("C"), rawExcerpt, language, market,
+              artifactClass (workaround|grey_market|queue|hire_ducttape|price_asymmetry|ritual|policy_shift|other),
+              actor, workflow, friction,
+              gravity {touchpoint, monthlyCostEst, evidence, independentSources},
+              firstSeen, collectorVersion.
+              Maximum 10 observations, only the strongest. If nothing qualifies, output [].
+            input: ${{ data.latest("sources", "render-page").attributes.text }}
+      - name: store
+        dependsOn:
+          - step: llm
+            condition:
+              type: succeeded
+        task:
+          type: model_method
+          modelIdOrName: records
+          methodName: ingest_text
+          inputs:
+            kind: observation
+            text: ${{ data.latest("llm-local", "inbox").attributes.raw }}
+version: 1

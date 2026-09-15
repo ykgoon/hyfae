@@ -1,0 +1,158 @@
+id: 62b83773-58a9-419d-8756-648170efa4bb
+name: redteam-monthly
+description: >-
+  Standing red-team: attacks the machine itself — kill-reason distribution,
+  card-survival rates, and whether scoring is drifting toward "feels
+  surprising" instead of monetization gravity. Persists a memo note per run.
+tags:
+  loop: meta
+  cadence: monthly
+trigger:
+  schedule: "0 9 1 * *"
+  inputs:
+    provider: openrouter
+inputs:
+  properties:
+    provider:
+      type: string
+      enum: [openrouter, local, none]
+      default: openrouter
+      description: LLM backend for the red-team pass
+  required: []
+jobs:
+  - name: render
+    description: Deterministic rendering of graveyard + feedback history
+    steps:
+      - name: render-graveyard
+        task:
+          type: model_method
+          modelIdOrName: records
+          methodName: render
+          inputs:
+            kind: graveyard
+            records: ${{ data.findBySpec("records", "graveyard") }}
+      - name: render-feedback
+        task:
+          type: model_method
+          modelIdOrName: records
+          methodName: render
+          inputs:
+            kind: feedback
+            records: ${{ data.findBySpec("records", "feedback") }}
+
+  - name: attack-openrouter
+    description: OpenRouter red-team pass (guarded; skipped when provider=local)
+    dependsOn:
+      - job: render
+        condition:
+          type: succeeded
+    steps:
+      - name: llm
+        guard: ${{ inputs.provider != "openrouter" }}
+        task:
+          type: model_method
+          modelIdOrName: llm-openrouter
+          methodName: chat
+          inputs:
+            requestId: redteam
+            temperature: 0.7
+            maxTokens: 2048
+            messages:
+              - role: system
+                content: >-
+                  You are the permanent red-team agent of an opportunity
+                  machine. Your mandate: find where the machine is gaming
+                  itself. Input: graveyard records (kills with reason codes) and
+                  operator feedback (escalate/dismiss with reasons).
+
+
+                  Analyze:
+                  1. Kill-reason distribution — are kills clustered in one
+                     stage or reason code? That stage's threshold may be miscalibrated.
+                  2. Dismissal patterns — recurring operator dismissal reasons
+                     reveal a preference model; are collectors ignoring it?
+                  3. Proxy drift — is the pipeline optimizing "anomalies that
+                     feel surprising" instead of monetization gravity?
+                  4. Blank spots — what is NOT being killed or escalated
+                     (no graveyard entries at all = falsification not running).
+
+
+                  Output: a tight markdown memo (no code fences) with findings
+                  and at most 3 concrete threshold/prompt changes, each marked
+                  hypothesis:true (tuning only via graveyard distribution, never
+                  ad-hoc).
+              - role: user
+                content: >-
+                  GRAVEYARD:
+                  ${{ data.latest("records", "render-graveyard").attributes.text }}
+
+
+                  FEEDBACK:
+                  ${{ data.latest("records", "render-feedback").attributes.text }}
+      - name: memo
+        dependsOn:
+          - step: llm
+            condition:
+              type: succeeded
+        task:
+          type: model_method
+          modelIdOrName: records
+          methodName: save_note
+          inputs:
+            title: redteam-monthly
+            text: ${{ data.latest("llm-openrouter", "redteam").attributes.choices[0].message.content }}
+
+  - name: attack-local
+    description: Ollama red-team pass (guarded; skipped when provider=openrouter)
+    dependsOn:
+      - job: render
+        condition:
+          type: succeeded
+    steps:
+      - name: llm
+        guard: ${{ inputs.provider != "local" }}
+        task:
+          type: model_method
+          modelIdOrName: llm-local
+          methodName: generate
+          inputs:
+            instanceName: redteam
+            prompt: >-
+              You are the permanent red-team agent of an opportunity
+              machine. Your mandate: find where the machine is gaming
+              itself. Input: graveyard records (kills with reason codes) and
+              operator feedback (escalate/dismiss with reasons).
+
+
+              Analyze:
+              1. Kill-reason distribution — are kills clustered in one
+                 stage or reason code? That stage's threshold may be miscalibrated.
+              2. Dismissal patterns — recurring operator dismissal reasons
+                 reveal a preference model; are collectors ignoring it?
+              3. Proxy drift — is the pipeline optimizing "anomalies that
+                 feel surprising" instead of monetization gravity?
+              4. Blank spots — what is NOT being killed or escalated
+                 (no graveyard entries at all = falsification not running).
+
+
+              Output: a tight markdown memo (no code fences) with findings
+              and at most 3 concrete threshold/prompt changes, each marked
+              hypothesis:true (tuning only via graveyard distribution, never
+              ad-hoc).
+
+
+              GRAVEYARD:
+            input: ${{ data.latest("records", "render-graveyard").attributes.text }}
+      - name: memo
+        dependsOn:
+          - step: llm
+            condition:
+              type: succeeded
+        task:
+          type: model_method
+          modelIdOrName: records
+          methodName: save_note
+          inputs:
+            title: redteam-monthly
+            text: ${{ data.latest("llm-local", "redteam").attributes.raw }}
+version: 1
