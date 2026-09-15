@@ -73,8 +73,8 @@ contract, deterministic promoter/digest).
   promote), `collect-daily --input provider=none` (fetch fan-out) — all
   succeeded; smoke data then purged (`swamp data delete records`).
 - LLM steps not live-called yet: OpenRouter key is a placeholder until you run
-  `swamp vault put llm-secrets OPENROUTER_API_KEY`; Ollama path assumes
-  `ollama serve` on :11434.
+  `swamp vault put llm-secrets OPENROUTER_API_KEY`; local path assumes a
+  llama.cpp OpenAI-compatible server on `grex-foxtrot:8090/v1`.
 
 ## 4. Starter sources and why (search strategy, not idea strategy)
 

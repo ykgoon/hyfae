@@ -1,9 +1,6 @@
-# opportunists — the opportunity machine
+# Opportunists — revenue opportunity mining machine
 
-Swamp-native implementation of the v2 latent-need synthesis machine from
-`proposal.md`: deterministic shell around probabilistic cores. Swamp workflows
-orchestrate; versioned LLM prompts cognitate; a typed append-only store
-(`records`) is the system of record.
+Look for hidden profit opportunities. Built with Swamp.
 
 ## Layout
 
@@ -15,7 +12,7 @@ models/
   sources/       source registry (7 starter SEA sources, Tier A/B)
   records/       the typed store instance
   llm-openrouter OpenRouter backend (key from vault llm-secrets)
-  llm-local      Ollama backend (localhost:11434)
+  llm-local      OpenAI-compatible llama.cpp backend (grex-foxtrot:8090)
 workflows/
   collect-daily      Loop 1 — fetch all sources → LLM extraction → observations
   extract-weekly     Loop 2 — observations → tensions (enabling-shift, invariants)
@@ -37,7 +34,7 @@ reports/               weekly-*.md digests land here
 ```bash
 swamp vault put llm-secrets OPENROUTER_API_KEY        # once; stdin gets the key
 ./bin/collect openrouter                               # daily: fetch + extract
-./bin/collect local                                    # same, via Ollama
+./bin/collect local                                    # same, via llama.cpp on grex-foxtrot
 ./bin/collect                                          # fetch only (no LLM spend)
 swamp workflow run extract-weekly --input provider=openrouter
 swamp workflow run synthesize-weekly --input provider=openrouter
@@ -52,11 +49,11 @@ swamp serve                                            # enables cron triggers
 
 Every cognition workflow takes `provider`:
 
-| provider      | backend                        | cost        |
-| ------------- | ------------------------------ | ----------- |
-| `openrouter`  | `models/@sntxrr/openrouter/llm-openrouter.yaml` — edit `defaultModel` (cheap for Loop 1; set flagship for Loops 3-4) | token spend |
-| `local`       | `models/@keeb/ollama/llm-local.yaml` — `ollamaUrl`, `model` | free, needs Ollama running |
-| `none`        | deterministic steps only (fetch, render, promote) | zero |
+| provider     | backend                                                                                                              | cost                       |
+|--------------|----------------------------------------------------------------------------------------------------------------------|----------------------------|
+| `openrouter` | `models/@sntxrr/openrouter/llm-openrouter.yaml` — edit `defaultModel` (cheap for Loop 1; set flagship for Loops 3-4) | token spend                |
+| `local`      | `models/@sntxrr/openrouter/llm-local.yaml` — `baseUrl`, `defaultModel`                                                                 | free, needs llama.cpp on grex-foxtrot:8090 |
+| `none`       | deterministic steps only (fetch, render, promote)                                                                    | zero                       |
 
 Provider key lives in vault: `swamp vault read-secret llm-secrets OPENROUTER_API_KEY`.
 Switch globally by editing `trigger.inputs.provider` in each workflow YAML.

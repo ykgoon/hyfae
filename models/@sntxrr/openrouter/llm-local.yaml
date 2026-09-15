@@ -1,0 +1,12 @@
+type: '@sntxrr/openrouter'
+typeVersion: 2026.06.20.1
+id: 6a718f24-55ef-4a8e-aee3-4192a2f57d69
+name: llm-local
+version: 1
+tags: {}
+globalArguments:
+  apiKey: llama.cpp-local
+  baseUrl: http://grex-foxtrot:8090/v1
+  defaultModel: /models/gemma-4-E4B-it-Q6_K.gguf
+  siteName: opportunity-machine
+methods: {}

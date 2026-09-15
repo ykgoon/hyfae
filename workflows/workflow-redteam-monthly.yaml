@@ -103,7 +103,7 @@ jobs:
             text: ${{ data.latest("llm-openrouter", "redteam").attributes.choices[0].message.content }}
 
   - name: attack-local
-    description: Ollama red-team pass (guarded; skipped when provider=openrouter)
+    description: Local llama.cpp red-team pass (guarded; skipped when provider=openrouter)
     dependsOn:
       - job: render
         condition:
@@ -114,35 +114,43 @@ jobs:
         task:
           type: model_method
           modelIdOrName: llm-local
-          methodName: generate
+          methodName: chat
           inputs:
-            instanceName: redteam
-            prompt: >-
-              You are the permanent red-team agent of an opportunity
-              machine. Your mandate: find where the machine is gaming
-              itself. Input: graveyard records (kills with reason codes) and
-              operator feedback (escalate/dismiss with reasons).
+            requestId: redteam
+            temperature: 0.7
+            maxTokens: 2048
+            messages:
+              - role: system
+                content: >-
+                  You are the permanent red-team agent of an opportunity
+                  machine. Your mandate: find where the machine is gaming
+                  itself. Input: graveyard records (kills with reason codes) and
+                  operator feedback (escalate/dismiss with reasons).
 
 
-              Analyze:
-              1. Kill-reason distribution — are kills clustered in one
-                 stage or reason code? That stage's threshold may be miscalibrated.
-              2. Dismissal patterns — recurring operator dismissal reasons
-                 reveal a preference model; are collectors ignoring it?
-              3. Proxy drift — is the pipeline optimizing "anomalies that
-                 feel surprising" instead of monetization gravity?
-              4. Blank spots — what is NOT being killed or escalated
-                 (no graveyard entries at all = falsification not running).
+                  Analyze:
+                  1. Kill-reason distribution — are kills clustered in one
+                     stage or reason code? That stage's threshold may be miscalibrated.
+                  2. Dismissal patterns — recurring operator dismissal reasons
+                     reveal a preference model; are collectors ignoring it?
+                  3. Proxy drift — is the pipeline optimizing "anomalies that
+                     feel surprising" instead of monetization gravity?
+                  4. Blank spots — what is NOT being killed or escalated
+                     (no graveyard entries at all = falsification not running).
 
 
-              Output: a tight markdown memo (no code fences) with findings
-              and at most 3 concrete threshold/prompt changes, each marked
-              hypothesis:true (tuning only via graveyard distribution, never
-              ad-hoc).
+                  Output: a tight markdown memo (no code fences) with findings
+                  and at most 3 concrete threshold/prompt changes, each marked
+                  hypothesis:true (tuning only via graveyard distribution, never
+                  ad-hoc).
+              - role: user
+                content: >-
+                  GRAVEYARD:
+                  ${{ data.latest("records", "render-graveyard").attributes.text }}
 
 
-              GRAVEYARD:
-            input: ${{ data.latest("records", "render-graveyard").attributes.text }}
+                  FEEDBACK:
+                  ${{ data.latest("records", "render-feedback").attributes.text }}
       - name: memo
         dependsOn:
           - step: llm
@@ -154,5 +162,5 @@ jobs:
           methodName: save_note
           inputs:
             title: redteam-monthly
-            text: ${{ data.latest("llm-local", "redteam").attributes.raw }}
+            text: ${{ data.latest("llm-local", "redteam").attributes.choices[0].message.content }}
 version: 1

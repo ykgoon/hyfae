@@ -96,7 +96,7 @@ jobs:
             text: ${{ data.latest("llm-openrouter", "tension").attributes.choices[0].message.content }}
 
   - name: extract-local
-    description: Ollama tension extraction (guarded; skipped when provider=openrouter)
+    description: Local llama.cpp tension extraction (guarded; skipped when provider=openrouter)
     dependsOn:
       - job: render
         condition:
@@ -107,38 +107,43 @@ jobs:
         task:
           type: model_method
           modelIdOrName: llm-local
-          methodName: generate
+          methodName: chat
           inputs:
-            instanceName: tension
-            prompt: >-
-              You are the tension-extraction stage of an opportunity machine
-              for Southeast Asia. Input: stored observations (structured,
-              with verbatim excerpts and gravity evidence).
+            requestId: tension
+            temperature: 0.5
+            maxTokens: 4096
+            messages:
+              - role: system
+                content: >-
+                  You are the tension-extraction stage of an opportunity machine
+                  for Southeast Asia. Input: stored observations (structured,
+                  with verbatim excerpts and gravity evidence).
 
 
-              For each cluster of related observations produce a TENSION:
-              expectation vs reality, who bears the cost, and — most
-              important — unaddressedReason: WHY has this gone unaddressed?
-              ("nobody noticed" may be gold; "five startups died" is a
-              different lesson — say which.) Also identify enablingShift:
-              what changed recently (regulation, API, cost curve, model
-              capability) that makes this NEWLY solvable? If no shift <=24
-              months, set within24mo=false and status="dormant".
+                  For each cluster of related observations produce a TENSION:
+                  expectation vs reality, who bears the cost, and — most
+                  important — unaddressedReason: WHY has this gone unaddressed?
+                  ("nobody noticed" may be gold; "five startups died" is a
+                  different lesson — say which.) Also identify enablingShift:
+                  what changed recently (regulation, API, cost curve, model
+                  capability) that makes this NEWLY solvable? If no shift <=24
+                  months, set within24mo=false and status="dormant".
 
 
-              marketInvariants: list the local constraints (regulatory
-              regime, language, platform lock-in, payment norms) any viable
-              solution must not violate.
+                  marketInvariants: list the local constraints (regulatory
+                  regime, language, platform lock-in, payment norms) any viable
+                  solution must not violate.
 
 
-              Output: ONLY a JSON array (no prose, no fences) of objects:
-              id ("tns-" + short slug), observationIds (from the input),
-              expectation, reality, costBearer,
-              enablingShift {whatChanged, date, evidence, within24mo},
-              unaddressedReason, marketInvariants (array of strings),
-              status ("active"|"dormant"), extractorVersion ("extract-weekly.v1").
-              Maximum 8 tensions. If nothing qualifies, output [].
-            input: ${{ data.latest("records", "render-observation").attributes.text }}
+                  Output: ONLY a JSON array (no prose, no fences) of objects:
+                  id ("tns-" + short slug), observationIds (from the input),
+                  expectation, reality, costBearer,
+                  enablingShift {whatChanged, date, evidence, within24mo},
+                  unaddressedReason, marketInvariants (array of strings),
+                  status ("active"|"dormant"), extractorVersion ("extract-weekly.v1").
+                  Maximum 8 tensions. If nothing qualifies, output [].
+              - role: user
+                content: ${{ data.latest("records", "render-observation").attributes.text }}
       - name: store
         dependsOn:
           - step: llm
@@ -150,5 +155,5 @@ jobs:
           methodName: ingest_text
           inputs:
             kind: tension
-            text: ${{ data.latest("llm-local", "tension").attributes.raw }}
+            text: ${{ data.latest("llm-local", "tension").attributes.choices[0].message.content }}
 version: 1

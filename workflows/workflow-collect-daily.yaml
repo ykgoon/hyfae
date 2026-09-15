@@ -93,7 +93,7 @@ jobs:
             text: ${{ data.latest("llm-openrouter", "collect").attributes.choices[0].message.content }}
 
   - name: extract-local
-    description: Ollama extraction pass (guarded; skipped when provider=openrouter)
+    description: Local llama.cpp extraction pass (guarded; skipped when provider=openrouter)
     dependsOn:
       - job: fetch
         condition:
@@ -104,39 +104,44 @@ jobs:
         task:
           type: model_method
           modelIdOrName: llm-local
-          methodName: generate
+          methodName: chat
           inputs:
-            instanceName: collect
-            prompt: >-
-              You are the collector stage of an opportunity-scouting machine
-              focused on Southeast Asia (MY/ID/TH/VN/PH). You receive raw
-              excerpts fetched from forums, app reviews, regulator pages and
-              public tickers. Extract OBSERVATIONS of friction behavior —
-              workarounds, grey markets, queues, hiring duct-tape,
-              price asymmetries, rituals, policy shifts.
+            requestId: collect
+            temperature: 0.4
+            maxTokens: 4096
+            messages:
+              - role: system
+                content: >-
+                  You are the collector stage of an opportunity-scouting machine
+                  focused on Southeast Asia (MY/ID/TH/VN/PH). You receive raw
+                  excerpts fetched from forums, app reviews, regulator pages and
+                  public tickers. Extract OBSERVATIONS of friction behavior —
+                  workarounds, grey markets, queues, hiring duct-tape,
+                  price asymmetries, rituals, policy shifts.
 
 
-              Hard rules:
-              - rawExcerpt MUST be a verbatim quote in the original language. Never translate.
-              - Zero invention: only what the excerpt shows.
-              - economic gravity is mandatory: classify the touchpoint
-                (transaction | compliance | labor), estimate monthlyCostEst in
-                MYR-equivalent, cite the excerpt as evidence, count how many
-                independent excerpt blocks support it (independentSources).
-              - Drop anything with no plausible money in motion.
-              - firstSeen: today's date, ISO. collectorVersion: "collect-daily.v1".
+                  Hard rules:
+                  - rawExcerpt MUST be a verbatim quote in the original language. Never translate.
+                  - Zero invention: only what the excerpt shows.
+                  - economic gravity is mandatory: classify the touchpoint
+                    (transaction | compliance | labor), estimate monthlyCostEst in
+                    MYR-equivalent, cite the excerpt as evidence, count how many
+                    independent excerpt blocks support it (independentSources).
+                  - Drop anything with no plausible money in motion.
+                  - firstSeen: today's date, ISO. collectorVersion: "collect-daily.v1".
 
-              Output: ONLY a JSON array (no prose, no fences) of objects with
-              exactly these fields:
-              id ("obs-" + short slug of sourceName + hash of excerpt),
-              sourceName, sourceRef (the url in the SOURCE header),
-              tier ("A"|"B"|"C"), rawExcerpt, language, market,
-              artifactClass (workaround|grey_market|queue|hire_ducttape|price_asymmetry|ritual|policy_shift|other),
-              actor, workflow, friction,
-              gravity {touchpoint, monthlyCostEst, evidence, independentSources},
-              firstSeen, collectorVersion.
-              Maximum 10 observations, only the strongest. If nothing qualifies, output [].
-            input: ${{ data.latest("sources", "bundle").attributes.text }}
+                  Output: ONLY a JSON array (no prose, no fences) of objects with
+                  exactly these fields:
+                  id ("obs-" + short slug of sourceName + hash of excerpt),
+                  sourceName, sourceRef (the url in the SOURCE header),
+                  tier ("A"|"B"|"C"), rawExcerpt, language, market,
+                  artifactClass (workaround|grey_market|queue|hire_ducttape|price_asymmetry|ritual|policy_shift|other),
+                  actor, workflow, friction,
+                  gravity {touchpoint, monthlyCostEst, evidence, independentSources},
+                  firstSeen, collectorVersion.
+                  Maximum 10 observations, only the strongest. If nothing qualifies, output [].
+              - role: user
+                content: ${{ data.latest("sources", "bundle").attributes.text }}
       - name: store
         dependsOn:
           - step: llm
@@ -148,5 +153,5 @@ jobs:
           methodName: ingest_text
           inputs:
             kind: observation
-            text: ${{ data.latest("llm-local", "collect").attributes.raw }}
+            text: ${{ data.latest("llm-local", "collect").attributes.choices[0].message.content }}
 version: 1

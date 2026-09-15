@@ -93,7 +93,9 @@ swamp data delete records
 
 - `OPENROUTER_API_KEY` in vault `llm-secrets` is a placeholder until
   `swamp vault put llm-secrets OPENROUTER_API_KEY`.
-- `local` provider needs `ollama serve` on :11434 (model `qwen3:14b`).
+- `local` provider = llama.cpp server (OpenAI-compatible) at
+  `http://grex-foxtrot:8090/v1` — client type `@sntxrr/openrouter` (same wire
+  format as `llm-openrouter`; outputs `.attributes.choices[0].message.content`).
 - Workflow cron schedules fire only while `swamp serve` is running.
 - Tier C (walled platforms — FB/Telegram) is NEVER automated; enters only via
   `bin/inbox` → `sources.ingest_paste`.
