@@ -3,5 +3,5 @@ name: llm-secrets
 type: local_encryption
 config:
   auto_generate: true
-  base_dir: /home/ykgoon/opportunists
+  base_dir: /home/ykgoon/hyfae
 createdAt: '2026-09-15T01:05:51.961Z'

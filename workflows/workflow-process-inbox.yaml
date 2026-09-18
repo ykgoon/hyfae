@@ -48,7 +48,7 @@ jobs:
             messages:
               - role: system
                 content: >-
-                  You are the collector stage of an opportunity-scouting machine
+                  You are the collector stage of the Hyfae opportunity-scouting machine
                   focused on Southeast Asia (MY/ID/TH/VN/PH). Input: raw pasted
                   excerpts from walled platforms (Facebook groups, Telegram,
                   WhatsApp). Extract OBSERVATIONS of friction behavior —
@@ -109,7 +109,7 @@ jobs:
             messages:
               - role: system
                 content: >-
-                  You are the collector stage of an opportunity-scouting machine
+                  You are the collector stage of the Hyfae opportunity-scouting machine
                   focused on Southeast Asia (MY/ID/TH/VN/PH). Input: raw pasted
                   excerpts from walled platforms (Facebook groups, Telegram,
                   WhatsApp). Extract OBSERVATIONS of friction behavior —

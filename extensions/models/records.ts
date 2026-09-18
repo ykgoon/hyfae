@@ -1,5 +1,5 @@
 /**
- * `@oppo/records` — the typed, append-only store for the opportunity machine.
+ * `@hyfae/records` — the typed, append-only store for the Hyfae machine.
  *
  * Every stage's output is validated against a JSON schema before write;
  * failures land in `deadletter`, never silently dropped. Later stages never
@@ -357,11 +357,11 @@ function isoWeekLabel(d: Date): string {
 }
 
 /**
- * `@oppo/records` model definition — validated append-only store, promoter,
+ * `@hyfae/records` model definition — validated append-only store, promoter,
  * and digest renderer.
  */
 export const model = {
-  type: "@oppo/records",
+  type: "@hyfae/records",
   version: "2026.09.14.1",
   globalArguments: GlobalArgsSchema,
   resources: {
@@ -593,7 +593,7 @@ export const model = {
 
         // Weekly digest markdown — the only human surface.
         const lines: string[] = [
-          `# Opportunity Weekly — ${week}`,
+          `# Hyfae Weekly — ${week}`,
           "",
           `${promoted.length} card(s) promoted (cap ${cap}). ${demoted.length} archived to graveyard.`,
           "",
@@ -617,7 +617,7 @@ export const model = {
             "",
             `**Feedback (copy-paste):**`,
             "```",
-            `swamp model @oppo/records method run records ingest --input kind=feedback --input 'records=[{"id":"fb-${String(s.id).slice(0, 20)}","cardId":"card-${String(s.id).slice(0, 20)}","decision":"dismiss","reason":"<140 chars>","assumptionBroken":false,"at":"${new Date().toISOString()}"}]'`,
+            `swamp model @hyfae/records method run records ingest --input kind=feedback --input 'records=[{"id":"fb-${String(s.id).slice(0, 20)}","cardId":"card-${String(s.id).slice(0, 20)}","decision":"dismiss","reason":"<140 chars>","assumptionBroken":false,"at":"${new Date().toISOString()}"}]'`,
             "```",
             "",
           );

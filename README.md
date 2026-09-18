@@ -1,4 +1,4 @@
-# Opportunists — revenue opportunity mining machine
+# Hyfae — revenue opportunity mining machine
 
 Look for hidden profit opportunities. Built with Swamp.
 
@@ -6,8 +6,8 @@ Look for hidden profit opportunities. Built with Swamp.
 
 ```
 extensions/models/
-  fetcher.ts     @oppo/fetcher  — Tier A/B collection + Tier C paste intake
-  records.ts     @oppo/records  — six record schemas, dead-letter, promoter, digest
+  fetcher.ts     @hyfae/fetcher  — Tier A/B collection + Tier C paste intake
+  records.ts     @hyfae/records  — six record schemas, dead-letter, promoter, digest
 models/
   sources/       source registry (7 starter SEA sources, Tier A/B)
   records/       the typed store instance

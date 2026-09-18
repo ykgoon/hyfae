@@ -53,7 +53,7 @@ jobs:
             messages:
               - role: system
                 content: >-
-                  You are the tension-extraction stage of an opportunity machine
+                  You are the tension-extraction stage of the Hyfae opportunity machine
                   for Southeast Asia. Input: stored observations (structured,
                   with verbatim excerpts and gravity evidence).
 
@@ -115,7 +115,7 @@ jobs:
             messages:
               - role: system
                 content: >-
-                  You are the tension-extraction stage of an opportunity machine
+                  You are the tension-extraction stage of the Hyfae opportunity machine
                   for Southeast Asia. Input: stored observations (structured,
                   with verbatim excerpts and gravity evidence).
 

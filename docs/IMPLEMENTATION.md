@@ -1,4 +1,4 @@
-# Implementation report — opportunity machine v0
+# Implementation report — Hyfae opportunity machine v0
 
 Build log mapping `proposal.md` (v2 design + six missing items) onto swamp
 primitives. Everything below was executed and verified in this repo.
@@ -13,7 +13,7 @@ Swamp mapping (per `swamp` skill routing + `design/` concepts):
 
 | v2 requirement            | Primitive used                                        |
 | ------------------------- | ----------------------------------------------------- |
-| Unit schema               | zod schemas inside `@oppo/records` extension model    |
+| Unit schema               | zod schemas inside `@hyfae/records` extension model   |
 | Typed append-only store   | `records` model — one resource per record, versioned  |
 | Run-log spec              | swamp audit timeline + versioned data + workflow history (`swamp workflow history search`, `swamp run history`) |
 | Cadence                   | workflow `trigger.schedule` (cron via `swamp serve`)  |
@@ -23,7 +23,7 @@ Swamp mapping (per `swamp` skill routing + `design/` concepts):
 | Cost envelope v0          | provider switch (`openrouter`/`local`/`none`), cheap model on Loop 1, `none` for dry runs |
 
 Extension search before build: `@sntxrr/openrouter` and `@keeb/ollama` pulled
-from the registry for cognition; `@oppo/fetcher`/`@oppo/records` custom models
+from the registry for cognition; `@hyfae/fetcher`/`@hyfae/records` custom models
 built only for the parts no extension covers (typed store, raw-excerpt adapter
 contract, deterministic promoter/digest).
 

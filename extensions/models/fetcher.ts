@@ -1,5 +1,5 @@
 /**
- * `@oppo/fetcher` — Tier A/B signal collection for the opportunity machine.
+ * `@hyfae/fetcher` — Tier A/B signal collection for the Hyfae machine.
  *
  * Adapter contract: emits RAW excerpts + metadata only, zero interpretation
  * (pre-interpretation principle). One `fetch_all` fan-out fetches every
@@ -40,7 +40,7 @@ const GlobalArgsSchema = z.object({
   userAgent: z
     .string()
     .default(
-      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 oppo-fetcher/0.1",
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 hyfae-fetcher/0.1",
     )
     .describe("Polite User-Agent for Tier A/B fetching"),
 });
@@ -169,10 +169,10 @@ async function fetchOne(
 }
 
 /**
- * `@oppo/fetcher` model definition — deterministic signal collection.
- */
+ * `@hyfae/fetcher` model definition — deterministic signal collection.
+   */
 export const model = {
-  type: "@oppo/fetcher",
+  type: "@hyfae/fetcher",
   version: "2026.09.14.1",
   globalArguments: GlobalArgsSchema,
   resources: {

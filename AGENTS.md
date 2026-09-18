@@ -43,7 +43,7 @@ consumption, run `swamp help [<command>...]` — e.g. `swamp help` returns
 the full tree, and `swamp help model method run` scopes to a subtree.
 <!-- END swamp managed section -->
 
-# Opportunity machine (repo-specific)
+# Hyfae opportunity machine (repo-specific)
 
 ## What this is
 

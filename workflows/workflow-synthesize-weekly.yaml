@@ -56,7 +56,7 @@ jobs:
             messages:
               - role: system
                 content: >-
-                  You are the synthesis stage of an opportunity machine for
+                  You are the synthesis stage of the Hyfae opportunity machine for
                   Southeast Asia. Input: stored tensions with market invariants.
 
 
@@ -177,7 +177,7 @@ jobs:
             messages:
               - role: system
                 content: >-
-                  You are the synthesis stage of an opportunity machine for
+                  You are the synthesis stage of the Hyfae opportunity machine for
                   Southeast Asia. Input: stored tensions with market invariants.
 
 

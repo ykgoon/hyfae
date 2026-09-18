@@ -60,7 +60,7 @@ jobs:
             messages:
               - role: system
                 content: >-
-                  You are the permanent red-team agent of an opportunity
+                  You are the permanent red-team agent of the Hyfae opportunity
                   machine. Your mandate: find where the machine is gaming
                   itself. Input: graveyard records (kills with reason codes) and
                   operator feedback (escalate/dismiss with reasons).
@@ -122,7 +122,7 @@ jobs:
             messages:
               - role: system
                 content: >-
-                  You are the permanent red-team agent of an opportunity
+                  You are the permanent red-team agent of the Hyfae opportunity
                   machine. Your mandate: find where the machine is gaming
                   itself. Input: graveyard records (kills with reason codes) and
                   operator feedback (escalate/dismiss with reasons).

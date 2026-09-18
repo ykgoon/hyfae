@@ -8,5 +8,5 @@ globalArguments:
   apiKey: llama.cpp-local
   baseUrl: http://grex-foxtrot:8090/v1
   defaultModel: /models/gemma-4-E4B-it-Q6_K.gguf
-  siteName: opportunity-machine
+  siteName: hyfae-machine
 methods: {}
