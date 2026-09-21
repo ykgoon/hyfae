@@ -78,11 +78,31 @@ contract, deterministic promoter/digest).
 
 ## 4. Starter sources and why (search strategy, not idea strategy)
 
-Tier A (public GET): iTunes customer-review RSS for Shopee MY + TNG eWallet
-(workaround/queue artifacts from wallets-open users), Lowyat (BM/EN workaround
-culture), Luno ETH/BT-MYR tickers (crypto-edge price asymmetry).
-Tier B (versioned/diffable): LHDN e-Invois hub, BNM notices (regulatory shock —
-deadline-driven demand, each guideline rev is a feature spec).
+Verdict roster from the `justify-collect-source-coverage` audit (all verdicts
+live-fetch verified HTTP 200 on 2026-09-21; smoke `collect-daily
+--input provider=none` re-confirmed 7/7 green):
+
+| Source | Verdict | Friction class | Gravity touchpoint |
+| ------ | ------- | -------------- | ------------------ |
+| `lhdn-einvois` (Tier B) | keep | policy_shift | compliance — each guideline rev is a dated e-invoicing deadline driving spend |
+| `bnm-notices` (Tier B) | keep | policy_shift | compliance — regulatory notices with deadline-driven demand |
+| `appstore-reviews-shopee-my` (Tier A) | keep | workaround, ritual | transaction — failed payments, COD reconciliation from wallets-open users |
+| `appstore-reviews-tng-my` (Tier A) | keep | workaround, queue | transaction — payout queues, failed top-ups |
+| `lowyat-network` → `https://forum.lowyat.net/rss.php` (Tier A, `text`) | fix | workaround, grey_market | transaction — BM/EN workaround and grey-market discourse (thread titles + post text; forum index HTML returned empty through the fetcher runtime, RSS is the fallback) |
+| `luno-ticker-ethmyr`, `luno-ticker-xbtmyr` | drop | `price_asymmetry` → dormant, no carrier | none — a price snapshot has no actor, workflow, or verbatim friction quote and cannot satisfy gravity-evidence rules |
+| `appstore-reviews-tokopedia-id` (Tier A, ID) | add | workaround, queue | transaction — checkout voucher/payment bugs (verified 50-entry feed) |
+| `appstore-reviews-gcash-ph` (Tier A, PH) | add | workaround, queue | transaction — login/verification failures blocking emergency money access |
+| `appstore-reviews-truemoney-th` (Tier A, TH) | add | workaround, queue | transaction — double-charge, top-up never arrives, 1000+ support queue, account blocks (verified 200 2026-09-21, 50 entries) |
+| `appstore-reviews-momo-vn` (Tier A, VN) | add | workaround, queue | transaction — forced negative-balance payment, unauthorized deductions, wrong-transfer no-support, OTP phone-change blocks (verified 200 2026-09-21, 50 entries) |
+
+Registry now covers 5 markets (MY/ID/TH/VN/PH); the collector prompt scope line
+reads MY/ID/TH/VN/PH to agree (synced in BOTH `extract-openrouter` and
+`extract-local` jobs). Smoke `collect-daily --input provider=none` re-confirmed
+9-source fan-out green (TH/VN pages 200, 20k chars capped, verbatim Thai/Vietnamese
+friction). BNM showed one transient Cloudflare challenge
+(`Just a moment...`, 403) under rapid re-fetching; direct fetch stayed 200
+and the next run was 7/7 green — runtime failures remain non-fatal empty
+pages by contract.
 Deliberately excluded: English cliché surfaces (r/SaaS, HN) and Tier C walls
 (FB/Telegram) — the latter via manual `bin/inbox` only.
 

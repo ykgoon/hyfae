@@ -37,27 +37,57 @@ globalArguments:
       market: MY
       artifactClasses: [workaround, queue]
       extract: json
-    # Local-language forum surface (Tier A, workaround culture)
+    # Local-language forum surface (Tier A, workaround culture) — thread-level
+    # RSS, NOT the www.lowyat.net homepage (front-page noise). Carries thread
+    # titles + post text. Verified 200 2026-09-21 via curl; forum index HTML
+    # returned empty through the fetcher runtime (bot-wall), RSS is the
+    # fallback per design D3.
     - name: lowyat-network
-      url: https://www.lowyat.net/
+      url: https://forum.lowyat.net/rss.php
       tier: A
       language: ms
       market: MY
       artifactClasses: [workaround, grey_market]
-      extract: html
-    # Crypto edge (Tier A, public ticker — price asymmetry between corridors)
-    - name: luno-ticker-ethmyr
-      url: https://api.luno.com/api/1/ticker?pair=ETHMYR
+      extract: text
+    # ID breadth (Tier A): Tokopedia app reviews — checkout/payment friction.
+    # Verified 200 2026-09-21 (50 entries; voucher-vanishing + payment-bug quotes).
+    - name: appstore-reviews-tokopedia-id
+      url: https://itunes.apple.com/ID/rss/customerreviews/page=1/id=1001394201/sortby=mostrecent/json
       tier: A
-      language: en
-      market: MY
-      artifactClasses: [price_asymmetry]
+      language: id
+      market: ID
+      artifactClasses: [workaround, queue]
       extract: json
-    - name: luno-ticker-xbtmyr
-      url: https://api.luno.com/api/1/ticker?pair=XBTMYR
+    # PH breadth (Tier A): GCash wallet reviews — login/verification blocking
+    # emergency money access. Verified 200 2026-09-21 (50 entries).
+    - name: appstore-reviews-gcash-ph
+      url: https://itunes.apple.com/PH/rss/customerreviews/page=1/id=520020791/sortby=mostrecent/json
       tier: A
       language: en
-      market: MY
-      artifactClasses: [price_asymmetry]
+      market: PH
+      artifactClasses: [workaround, queue]
+      extract: json
+    # TH breadth (Tier A): TrueMoney wallet reviews — double-charge, top-up
+    # not arriving, 1000+ support queue, account blocks. Verified 200
+    # 2026-09-21 (50 entries; friction class workaround+queue, gravity
+    # transaction — failed payments/top-ups blocking spend; Tier A public GET).
+    - name: appstore-reviews-truemoney-th
+      url: https://itunes.apple.com/TH/rss/customerreviews/page=1/id=663885752/sortby=mostrecent/json
+      tier: A
+      language: th
+      market: TH
+      artifactClasses: [workaround, queue]
+      extract: json
+    # VN breadth (Tier A): MoMo wallet reviews — forced negative-balance
+    # payment, unauthorized deductions, wrong-transfer no-support, OTP
+    # phone-change blocks. Verified 200 2026-09-21 (50 entries; friction
+    # class workaround+queue, gravity transaction — blocked/emergency money
+    # access; Tier A public GET).
+    - name: appstore-reviews-momo-vn
+      url: https://itunes.apple.com/VN/rss/customerreviews/page=1/id=918751511/sortby=mostrecent/json
+      tier: A
+      language: vi
+      market: VN
+      artifactClasses: [workaround, queue]
       extract: json
 methods: {}

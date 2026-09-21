@@ -51,10 +51,10 @@ jobs:
                 content: >-
                   You are the collector stage of the Hyfae opportunity-scouting machine
                   focused on Southeast Asia (MY/ID/TH/VN/PH). You receive raw
-                  excerpts fetched from forums, app reviews, regulator pages and
-                  public tickers. Extract OBSERVATIONS of friction behavior —
+                  excerpts fetched from forums, app reviews and regulator pages.
+                  Extract OBSERVATIONS of friction behavior —
                   workarounds, grey markets, queues, hiring duct-tape,
-                  price asymmetries, rituals, policy shifts.
+                  rituals, policy shifts. `price_asymmetry` is dormant (no carrier).
 
 
                   Hard rules:
@@ -114,10 +114,10 @@ jobs:
                 content: >-
                   You are the collector stage of the Hyfae opportunity-scouting machine
                   focused on Southeast Asia (MY/ID/TH/VN/PH). You receive raw
-                  excerpts fetched from forums, app reviews, regulator pages and
-                  public tickers. Extract OBSERVATIONS of friction behavior —
+                  excerpts fetched from forums, app reviews and regulator pages.
+                  Extract OBSERVATIONS of friction behavior —
                   workarounds, grey markets, queues, hiring duct-tape,
-                  price asymmetries, rituals, policy shifts.
+                  rituals, policy shifts. `price_asymmetry` is dormant (no carrier).
 
 
                   Hard rules:
