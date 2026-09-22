@@ -51,7 +51,7 @@ Swamp-native opportunity-scouting machine (SEA/MY focus). Design doc:
 `proposal.md`; verified build log: `docs/IMPLEMENTATION.md` (most accurate
 prose in the repo — trust it over memory). Four models (`sources`,
 `records`, `llm-openrouter`, `llm-local`), five workflows in `workflows/`,
-four operator wrappers in `bin/`. No own build/test toolchain — verification
+five operator wrappers in `bin/`. No own build/test toolchain — verification
 is entirely swamp commands.
 
 ## Verification ladder (before claiming done)
@@ -62,9 +62,9 @@ deno check extensions/models/*.ts
 swamp model validate
 swamp workflow validate && swamp workflow evaluate
 # smoke run — deterministic stages only, zero LLM spend:
-swamp workflow run extract-weekly --input provider=none
+swamp workflow run extract --input provider=none
 # then purge smoke data:
-swamp data delete records
+swamp data delete records <name> --yes
 ```
 
 ## Workflow editing gotchas
@@ -100,6 +100,9 @@ swamp data delete records
 - Tier C (walled platforms — FB/Telegram) is NEVER automated; enters only via
   `bin/inbox` → `sources.ingest_paste`.
 - Thresholds v0 are `hypothesis: true`. Never tune gates ad-hoc — changes only
-  via `redteam-monthly` memo justification.
+  via `redteam` memo justification.
 - Prefer `bin/collect|inbox|digest|feedback` over raw workflow invocations for
   operator flows (they wire provider defaults and input plumbing).
+- Default provider is `local` (grex-foxtrot llama.cpp); OpenRouter is opt-in
+  via `--input provider=openrouter`. `swamp serve` is optional — primary mode
+  is one-shot Docker chain via `bin/run-all` (see `compose.yaml`).

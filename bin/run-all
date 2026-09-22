@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Full chain: collect -> extract -> synthesize -> digest.
+# PROVIDER=openrouter|local|none (default local). Excludes process-inbox
+# (inbox-driven) and redteam (manual monthly ritual).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+PROVIDER="${PROVIDER:-local}"
+
+echo "== run-all: provider=$PROVIDER =="
+echo "== [1/4] collect =="
+./bin/collect "$PROVIDER"
+
+echo "== [2/4] extract =="
+swamp workflow run extract --input "provider=$PROVIDER"
+
+echo "== [3/4] synthesize =="
+swamp workflow run synthesize --input "provider=$PROVIDER"
+
+echo "== [4/4] digest =="
+./bin/digest
+
+echo "== run-all complete =="

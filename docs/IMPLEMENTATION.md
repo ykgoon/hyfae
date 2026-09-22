@@ -68,9 +68,9 @@ contract, deterministic promoter/digest).
   deadletter; 3 syntheses ingested; promote → cap respected, mirage +
   converged-obvious filtered, digest markdown emitted; feedback gesture
   accepted.
-- Workflow smoke: `extract-weekly --input provider=none` (render step,
-  findBySpec wiring), `synthesize-weekly --input provider=none` (render →
-  promote), `collect-daily --input provider=none` (fetch fan-out) — all
+- Workflow smoke: `extract --input provider=none` (render step,
+  findBySpec wiring), `synthesize --input provider=none` (render →
+  promote), `collect --input provider=none` (fetch fan-out) — all
   succeeded; smoke data then purged (`swamp data delete records`).
 - LLM steps not live-called yet: OpenRouter key is a placeholder until you run
   `swamp vault put llm-secrets OPENROUTER_API_KEY`; local path assumes a
@@ -79,7 +79,7 @@ contract, deterministic promoter/digest).
 ## 4. Starter sources and why (search strategy, not idea strategy)
 
 Verdict roster from the `justify-collect-source-coverage` audit (all verdicts
-live-fetch verified HTTP 200 on 2026-09-21; smoke `collect-daily
+live-fetch verified HTTP 200 on 2026-09-21; smoke `collect
 --input provider=none` re-confirmed 7/7 green):
 
 | Source | Verdict | Friction class | Gravity touchpoint |
@@ -97,7 +97,7 @@ live-fetch verified HTTP 200 on 2026-09-21; smoke `collect-daily
 
 Registry now covers 5 markets (MY/ID/TH/VN/PH); the collector prompt scope line
 reads MY/ID/TH/VN/PH to agree (synced in BOTH `extract-openrouter` and
-`extract-local` jobs). Smoke `collect-daily --input provider=none` re-confirmed
+`extract-local` jobs). Smoke `collect --input provider=none` re-confirmed
 9-source fan-out green (TH/VN pages 200, 20k chars capped, verbatim Thai/Vietnamese
 friction). BNM showed one transient Cloudflare challenge
 (`Just a moment...`, 403) under rapid re-fetching; direct fetch stayed 200
@@ -108,12 +108,25 @@ Deliberately excluded: English cliché surfaces (r/SaaS, HN) and Tier C walls
 
 ## 5. Operating cadence (the part that decides success)
 
-1. Daily: `./bin/collect openrouter` (or cron via `swamp serve`).
-2. Weekly Mon: `extract-weekly`; Fri: `synthesize-weekly` → `./bin/digest`.
-3. Weekly review ≤15 min: read `reports/weekly-*.md`, gesture via
-   `bin/feedback` on each card. Skipping two weeks = machine is noise.
-4. Monthly: `redteam-monthly` memo → adjust only what it justifies.
-5. Week-one metric: fraction of cards that make you genuinely stop. Trend that
+Primary mode is the one-shot Docker chain (no `swamp serve` needed); on the
+host the same steps work directly. The container runs with host networking so
+`grex-foxtrot:8090` resolves via the tailnet, `TZ=Asia/Kuala_Lumpur`, and
+state persists in the `.swamp/` volume.
+
+1. On trigger (host cron or manual): `docker compose run --rm machine
+   bin/run-all` — collect → extract → synthesize → digest, provider `local`.
+   Frequency is the operator's call; extract/synthesize reprocess the full
+   store each run (local LLM = time, not spend).
+2. Weekly review ≤15 min: read `reports/weekly-*.md` (or `./bin/digest`),
+   gesture via `bin/feedback` on each card. Skipping two weeks = machine is
+   noise.
+3. Ad hoc: `printf ... | ./bin/inbox <source>` for Tier C; `PROCESS=1` to
+   extract pastes.
+4. Monthly (manual): `swamp workflow run redteam --input provider=local` →
+   adjust only what the memo justifies.
+5. Optional server mode: `swamp serve` enables the cron schedules still
+   present in the workflow YAMLs; without it they are inert.
+6. Week-one metric: fraction of cards that make you genuinely stop. Trend that
    before spending on anything else. Loops 3-4 stay dark until observation
    mass accumulates (proposal: 2 weeks of Loop 1 first).
 
@@ -124,3 +137,34 @@ Deliberately excluded: English cliché surfaces (r/SaaS, HN) and Tier C walls
   requires a second provider instance per persona.
 - No per-stage token/cost budget enforcement; envelope is model choice + caps.
 - Probes are manual; card `probeResult` is operator-filled.
+
+## 7. docker-local-deployment (2026-09-22)
+
+Deployment re-platform: local LLM primary, cadence out of workflow names,
+one-shot Docker chain. Everything below verified in this repo.
+
+- Renames: `collect-daily`→`collect`, `extract-weekly`→`extract`,
+  `synthesize-weekly`→`synthesize`, `redteam-monthly`→`redteam` (UUIDs
+  preserved, steps untouched); `swamp workflow validate` 5/5 and
+  `swamp workflow evaluate` green. Provenance version strings inside prompts
+  (`collect-daily.v1` etc.) deliberately frozen — store-content identifiers,
+  not workflow refs.
+- Provider defaults flipped to `local` in all 5 workflows (`trigger.inputs`
+  + `properties.default`) and in `bin/collect` / `bin/inbox` wrappers.
+  OpenRouter remains opt-in.
+- `bin/run-all` chain: collect → extract → synthesize → digest, `PROVIDER`
+  env (default `local`); excludes `process-inbox` and `redteam`. Host smoke
+  `PROVIDER=none`: 4 stages green on a fresh store; `bin/digest` gained a
+  graceful no-op for empty store; records purged after smoke.
+- Docker: base `swampclub/swamp:20260922.011324.0-sha.2e949db5` (Debian
+  trixie; only `jq` added; base `ENTRYPOINT ["swamp"]` cleared; runs as
+  uid 1000, matching the host for the `./reports` bind mount). Container
+  smoke `PROVIDER=none docker compose run --rm machine bin/run-all`: 4
+  stages green with a fresh state volume; `PROVIDER` passes through compose
+  env; state persists across `docker compose run` invocations (cross-run
+  delete/query verified). Smoke data purged in-container.
+- Note: swamp CLI warns auth will be required from 2026-10-01 — revisit
+  container auth (`swamp auth login`) before then for collective features.
+- Live local-LLM chain pending: grex-foxtrot was offline during this change;
+  the first `bin/run-all` with `provider=local` is the remaining unverified
+  step (task 5.1).

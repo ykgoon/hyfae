@@ -3,7 +3,7 @@ name: process-inbox
 description: >-
   Tier C human-mediated path — converts pasted inbox excerpts (stored as pages
   via fetcher.ingest_paste) into observations. Same collector contract as
-  collect-daily; never automates walled platforms, only processes what the
+  collect; never automates walled platforms, only processes what the
   operator manually pasted.
 tags:
   loop: "1"
@@ -13,7 +13,7 @@ inputs:
     provider:
       type: string
       enum: [openrouter, local, none]
-      default: openrouter
+      default: local
       description: LLM backend for the extraction pass
   required: []
 jobs:

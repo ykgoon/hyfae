@@ -1,0 +1,23 @@
+# Hyfae opportunity machine — one-shot deployment.
+#
+# Overnight chain (host cron or manual; container exits when done):
+#   docker compose run --rm machine bin/run-all
+# Optional serve mode (enables cron schedules in workflow YAMLs):
+#   docker compose run --rm machine swamp serve --trusted-hosts <hosts>
+#
+# Networking: host network — the container shares the host's tailnet, so
+# grex-foxtrot:8090 resolves via MagicDNS. No Tailscale sidecar needed.
+services:
+  machine:
+    build: .
+    image: hyfae-machine:latest
+    network_mode: host
+    environment:
+      TZ: Asia/Kuala_Lumpur
+      PROVIDER: ${PROVIDER:-local}
+    volumes:
+      - hyfae-state:/machine/.swamp
+      - ./reports:/machine/reports
+
+volumes:
+  hyfae-state:

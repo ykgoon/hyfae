@@ -1,5 +1,5 @@
 id: cb451732-fdb7-4f6f-884f-605dfbcbfa48
-name: extract-weekly
+name: extract
 description: >-
   Loop 2 — tension extraction. Renders all stored observations deterministically,
   then one LLM pass converts them into tensions with enabling-shift and
@@ -11,13 +11,13 @@ tags:
 trigger:
   schedule: "0 7 * * 1"
   inputs:
-    provider: openrouter
+    provider: local
 inputs:
   properties:
     provider:
       type: string
       enum: [openrouter, local, none]
-      default: openrouter
+      default: local
       description: LLM backend for the extraction pass
   required: []
 jobs:

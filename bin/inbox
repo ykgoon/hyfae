@@ -13,5 +13,5 @@ jq -n --arg n "$NAME" --arg t "$TEXT" --arg l "$LANG_" --arg m "$MARKET" \
   '{sourceName:$n, text:$t, language:$l, market:$m}' \
   | swamp model method run sources ingest_paste --stdin
 if [ "${PROCESS:-0}" = "1" ]; then
-  swamp workflow run process-inbox --input "provider=${PROVIDER:-openrouter}"
+  swamp workflow run process-inbox --input "provider=${PROVIDER:-local}"
 fi

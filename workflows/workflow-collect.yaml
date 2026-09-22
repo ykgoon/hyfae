@@ -1,5 +1,5 @@
 id: e9cf7461-15a0-4bd2-b547-cf6cb1ab67e1
-name: collect-daily
+name: collect
 description: >-
   Loop 1 — broad observation. Fetch every registered Tier A/B source, run one
   LLM extraction pass over the bundle (cheap model by design), store validated
@@ -10,13 +10,13 @@ tags:
 trigger:
   schedule: "0 6 * * *"
   inputs:
-    provider: openrouter
+    provider: local
 inputs:
   properties:
     provider:
       type: string
       enum: [openrouter, local, none]
-      default: openrouter
+      default: local
       description: LLM backend for the extraction pass
   required: []
 jobs:

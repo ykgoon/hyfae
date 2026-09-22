@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Daily collection + extraction. PROVIDER=openrouter|local|none (default none = fetch only).
+# Collection + extraction. PROVIDER=openrouter|local|none (default local; none = fetch only).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-PROVIDER="${1:-${PROVIDER:-none}}"
-exec swamp workflow run collect-daily --input "provider=$PROVIDER"
+PROVIDER="${1:-${PROVIDER:-local}}"
+exec swamp workflow run collect --input "provider=$PROVIDER"

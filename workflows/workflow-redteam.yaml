@@ -1,5 +1,5 @@
 id: 62b83773-58a9-419d-8756-648170efa4bb
-name: redteam-monthly
+name: redteam
 description: >-
   Standing red-team: attacks the machine itself — kill-reason distribution,
   card-survival rates, and whether scoring is drifting toward "feels
@@ -10,13 +10,13 @@ tags:
 trigger:
   schedule: "0 9 1 * *"
   inputs:
-    provider: openrouter
+    provider: local
 inputs:
   properties:
     provider:
       type: string
       enum: [openrouter, local, none]
-      default: openrouter
+      default: local
       description: LLM backend for the red-team pass
   required: []
 jobs:
@@ -99,7 +99,7 @@ jobs:
           modelIdOrName: records
           methodName: save_note
           inputs:
-            title: redteam-monthly
+            title: redteam
             text: ${{ data.latest("llm-openrouter", "redteam").attributes.choices[0].message.content }}
 
   - name: attack-local
@@ -161,6 +161,6 @@ jobs:
           modelIdOrName: records
           methodName: save_note
           inputs:
-            title: redteam-monthly
+            title: redteam
             text: ${{ data.latest("llm-local", "redteam").attributes.choices[0].message.content }}
 version: 1

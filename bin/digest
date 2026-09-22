@@ -15,6 +15,10 @@ else
     NAME="$(swamp data query 'modelName == "records" && name.startsWith("digest-")' --json \
       | jq -r '[.results[]] | max_by(.createdAt) | .name')"
   fi
+  if [ -z "$NAME" ] || [ "$NAME" = "null" ]; then
+    echo "no digest record yet — run synthesize with an LLM provider first" >&2
+    exit 0
+  fi
   swamp data get records "$NAME" --json | jq -r '.content.markdown' > "$OUT/$NAME.md"
   echo "wrote $OUT/$NAME.md"
 fi

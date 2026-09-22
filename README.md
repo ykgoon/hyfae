@@ -14,36 +14,60 @@ models/
   llm-openrouter OpenRouter backend (key from vault llm-secrets)
   llm-local      OpenAI-compatible llama.cpp backend (grex-foxtrot:8090)
 workflows/
-  collect-daily      Loop 1 — fetch all sources → LLM extraction → observations
-  extract-weekly     Loop 2 — observations → tensions (enabling-shift, invariants)
-  synthesize-weekly  Loops 3+4 — cross-domain synthesis → two-gate falsification →
+  collect            Loop 1 — fetch all sources → LLM extraction → observations
+  extract            Loop 2 — observations → tensions (enabling-shift, invariants)
+  synthesize         Loops 3+4 — cross-domain synthesis → two-gate falsification →
                      cap-3 promotion → weekly digest markdown
-  redteam-monthly    meta — attacks the machine's own scoring; memo per run
+  redteam            meta — attacks the machine's own scoring; memo per run
   process-inbox      Tier C path — pasted excerpts → observations
 bin/
-  collect            daily fetch/extract wrapper
+  collect            fetch/extract wrapper
+  run-all            full chain: collect → extract → synthesize → digest
   inbox              paste a walled-platform excerpt, optionally process it
   digest             export latest weekly digest to reports/
   feedback           escalate/dismiss a card (feeds the calibration loop)
 inbox/                 drop Tier C text files here
 reports/               weekly-*.md digests land here
+Dockerfile + compose.yaml   one-shot deployment (swampclub/swamp base, host net, TZ)
 ```
 
 ## The five-minute version
 
 ```bash
-swamp vault put llm-secrets OPENROUTER_API_KEY        # once; stdin gets the key
-./bin/collect openrouter                               # daily: fetch + extract
-./bin/collect local                                    # same, via llama.cpp on grex-foxtrot
-./bin/collect                                          # fetch only (no LLM spend)
-swamp workflow run extract-weekly --input provider=openrouter
-swamp workflow run synthesize-weekly --input provider=openrouter
+swamp vault put llm-secrets OPENROUTER_API_KEY        # optional; only for provider=openrouter
+./bin/collect                                          # fetch + extract via llama.cpp on grex-foxtrot
+./bin/collect none                                     # fetch only (no LLM)
+./bin/run-all                                          # full chain: collect → extract → synthesize → digest
+swamp workflow run extract --input provider=openrouter
+swamp workflow run synthesize --input provider=openrouter
 ./bin/digest 2026-W37                                  # markdown to reports/
 ./bin/feedback <syn-id> dismiss "reason" false         # 2-tap calibration
 printf 'pasted thread text' | ./bin/inbox telegram-seller-group   # Tier C
 PROCESS=1 ./bin/inbox telegram-seller-group            # then extract pastes
-swamp serve                                            # enables cron triggers
+swamp serve                                            # optional; enables cron triggers
 ```
+
+## Deploy (one-shot Docker)
+
+Primary mode — no `swamp serve` needed. Host must be on the tailnet
+(grex-foxtrot resolves via MagicDNS; the container uses host networking).
+
+```bash
+docker compose build
+docker compose run --rm machine bin/run-all    # full chain overnight, provider=local
+PROVIDER=none docker compose run --rm machine bin/run-all   # deterministic-only smoke
+```
+
+- `.swamp/` state (store, bundles, vault) persists in the `hyfae-state`
+  volume; digests land in `./reports` on the host.
+- Container runs with `TZ=Asia/Kuala_Lumpur` — digest week labels follow the
+  MY calendar.
+- OpenRouter is opt-in: `PROVIDER=openrouter docker compose run --rm machine
+  bin/run-all` (after `swamp vault put llm-secrets OPENROUTER_API_KEY` inside
+  the container so the key lands in the volume state).
+- Alternative server mode: `docker compose run --rm machine swamp serve
+  --trusted-hosts <hosts>` enables the cron schedules still present in the
+  workflow YAMLs.
 
 ## LLM provider switch
 
@@ -75,7 +99,7 @@ Switch globally by editing `trigger.inputs.provider` in each workflow YAML.
 - Tension without enabling shift ≤24mo → `status: dormant`, not killed.
 - Falsification verdict `mirage` → graveyard; `alive` → promotable.
 - Max 3 cards/week (`records.maxCardsPerWeek`); overflow → graveyard `panel_converged_obvious`… capacity kill.
-- Tuning only via monthly kill-reason distribution (redteam-monthly memo), never ad-hoc.
+- Tuning only via monthly kill-reason distribution (redteam memo), never ad-hoc.
 
 ## Known v0 gaps (deliberate)
 

@@ -1,5 +1,5 @@
 id: 1c7efcf2-8493-449a-9dc0-867f8e735bbd
-name: synthesize-weekly
+name: synthesize
 description: >-
   Loops 3+4 — constraint-satisfying recombination (synthesizer) followed by
   two-gate falsification (critic: prior art + unawareness + durability), then
@@ -10,13 +10,13 @@ tags:
 trigger:
   schedule: "0 8 * * 6"
   inputs:
-    provider: openrouter
+    provider: local
 inputs:
   properties:
     provider:
       type: string
       enum: [openrouter, local, none]
-      default: openrouter
+      default: local
       description: LLM backend for synthesis + falsification
     week:
       type: string
