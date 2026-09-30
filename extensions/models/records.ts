@@ -41,7 +41,9 @@ export const ObservationSchema = z.object({
   friction: z.string().describe("What is broken, stated behaviorally"),
   gravity: z.object({
     touchpoint: z.enum(["transaction", "compliance", "labor"]),
-    monthlyCostEst: z.number().min(0).describe("MYR-equivalent per month"),
+    monthlyCostEst: z.preprocess(coerceMyr, z.number().min(0)).describe(
+      "MYR-equivalent per month, bare number",
+    ),
     evidence: z.string().describe("Why this cost estimate — cite the excerpt"),
     independentSources: z.number().int().min(1),
   }),
@@ -235,6 +237,19 @@ interface RecContext {
   ) => Promise<{ name: string }>;
 }
 
+/**
+ * Coerce local-LLM cost strings to a bare MYR number: strips currency
+ * symbols/commas/whitespace ("RM 100,000" -> 100000); ranges keep the first
+ * number ("50000-500000" -> 50000). Unparseable input passes through so the
+ * schema still rejects it honestly into deadletter.
+ */
+function coerceMyr(v: unknown): unknown {
+  if (typeof v === "number") return v;
+  if (typeof v !== "string") return v;
+  const m = v.replace(/,/g, "").match(/-?\d+(\.\d+)?/);
+  return m ? Number(m[0]) : v;
+}
+
 function slugify(s: string): string {
   return s
     .toLowerCase()
@@ -254,8 +269,50 @@ async function sha1Hex(input: string): Promise<string> {
 }
 
 /**
+ * Salvage complete top-level JSON objects from text whose outer array was
+ * cut off (e.g. LLM hit maxTokens mid-emit). Brace-matches from each `{`,
+ * string-aware, and keeps every span that parses. Returns [] when nothing
+ * salvageable exists.
+ */
+function salvageObjects(t: string): unknown[] {
+  const out: unknown[] = [];
+  for (let i = 0; i < t.length; i++) {
+    if (t[i] !== "{") continue;
+    let depth = 0;
+    let inStr = false;
+    let esc = false;
+    for (let j = i; j < t.length; j++) {
+      const c = t[j];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (c === "\\") esc = true;
+        else if (c === '"') inStr = false;
+      } else if (c === '"') {
+        inStr = true;
+      } else if (c === "{") {
+        depth++;
+      } else if (c === "}") {
+        depth--;
+        if (depth === 0) {
+          try {
+            out.push(JSON.parse(t.slice(i, j + 1)));
+          } catch {
+            // Broken span — keep scanning for inner complete objects.
+          }
+          i = j;
+          break;
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * Extract a JSON array from LLM text: strips markdown fences, finds the
- * outermost [ ... ] block. Returns [] when nothing parseable exists.
+ * outermost [ ... ] block. When the array is truncated (missing close) or
+ * otherwise unparseable, falls back to salvaging complete top-level objects.
+ * Returns [] when nothing parseable exists.
  */
 export function extractJsonArray(text: string): unknown[] {
   let t = text.trim();
@@ -271,16 +328,16 @@ export function extractJsonArray(text: string): unknown[] {
       try {
         return [JSON.parse(t.slice(os, oe + 1))];
       } catch {
-        return [];
+        return salvageObjects(t);
       }
     }
-    return [];
+    return salvageObjects(t);
   }
   try {
     const parsed: unknown = JSON.parse(t.slice(start, end + 1));
     return Array.isArray(parsed) ? parsed : [parsed];
   } catch {
-    return [];
+    return salvageObjects(t.slice(start));
   }
 }
 

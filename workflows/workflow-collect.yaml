@@ -45,7 +45,7 @@ jobs:
           inputs:
             requestId: collect
             temperature: 0.4
-            maxTokens: 4096
+            maxTokens: 8192
             messages:
               - role: system
                 content: >-
@@ -89,6 +89,9 @@ jobs:
                   gravity {touchpoint, monthlyCostEst, evidence, independentSources},
                   firstSeen, collectorVersion.
                   Maximum 10 observations, only the strongest. If nothing qualifies, output [].
+                  Output ONLY the JSON array — no analysis, no fences (fenced output is discarded).
+                  monthlyCostEst is a bare number (e.g. 150000 — no quotes, no RM, no commas).
+                  firstSeen is the run date, ISO.
               - role: user
                 content: ${{ data.latest("sources", "bundle").attributes.text }}
       - name: store
@@ -120,7 +123,7 @@ jobs:
           inputs:
             requestId: collect
             temperature: 0.4
-            maxTokens: 4096
+            maxTokens: 8192
             messages:
               - role: system
                 content: >-
@@ -164,6 +167,9 @@ jobs:
                   gravity {touchpoint, monthlyCostEst, evidence, independentSources},
                   firstSeen, collectorVersion.
                   Maximum 10 observations, only the strongest. If nothing qualifies, output [].
+                  Output ONLY the JSON array — no analysis, no fences (fenced output is discarded).
+                  monthlyCostEst is a bare number (e.g. 150000 — no quotes, no RM, no commas).
+                  firstSeen is the run date, ISO.
               - role: user
                 content: ${{ data.latest("sources", "bundle").attributes.text }}
       - name: store

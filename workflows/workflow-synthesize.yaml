@@ -52,7 +52,7 @@ jobs:
           inputs:
             requestId: synth
             temperature: 0.9
-            maxTokens: 4096
+            maxTokens: 8192
             messages:
               - role: system
                 content: >-
@@ -86,6 +86,7 @@ jobs:
                   unawarenessAffirmative: "pending", unawarenessNegative: "pending",
                   durability: "pending", verdict: "alive"}.
                   Maximum 6 syntheses. If nothing qualifies, output [].
+                  Output ONLY the JSON array — no analysis, no fences (fenced output is discarded).
               - role: user
                 content: ${{ data.latest("records", "render-tension").attributes.text }}
       - name: falsify
@@ -100,7 +101,7 @@ jobs:
           inputs:
             requestId: falsify
             temperature: 0.3
-            maxTokens: 4096
+            maxTokens: 8192
             messages:
               - role: system
                 content: >-
@@ -142,6 +143,7 @@ jobs:
                   Output: ONLY a JSON array of the SAME synthesis objects with
                   falsification and panel filled in. Keep all other fields
                   unchanged. If input was empty, output [].
+                  Output ONLY the JSON array — no analysis, no fences (fenced output is discarded).
               - role: user
                 content: ${{ data.latest("llm-openrouter", "synth").attributes.choices[0].message.content }}
       - name: store
@@ -173,7 +175,7 @@ jobs:
           inputs:
             requestId: synth
             temperature: 0.9
-            maxTokens: 4096
+            maxTokens: 8192
             messages:
               - role: system
                 content: >-
@@ -207,6 +209,7 @@ jobs:
                   unawarenessAffirmative: "pending", unawarenessNegative: "pending",
                   durability: "pending", verdict: "alive"}.
                   Maximum 6 syntheses. If nothing qualifies, output [].
+                  Output ONLY the JSON array — no analysis, no fences (fenced output is discarded).
               - role: user
                 content: ${{ data.latest("records", "render-tension").attributes.text }}
       - name: falsify
@@ -221,7 +224,7 @@ jobs:
           inputs:
             requestId: falsify
             temperature: 0.3
-            maxTokens: 4096
+            maxTokens: 8192
             messages:
               - role: system
                 content: >-
@@ -263,6 +266,7 @@ jobs:
                   Output: ONLY a JSON array of the SAME synthesis objects with
                   falsification and panel filled in. Keep all other fields
                   unchanged. If input was empty, output [].
+                  Output ONLY the JSON array — no analysis, no fences (fenced output is discarded).
               - role: user
                 content: ${{ data.latest("llm-local", "synth").attributes.choices[0].message.content }}
       - name: store

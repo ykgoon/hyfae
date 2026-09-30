@@ -49,7 +49,7 @@ jobs:
           inputs:
             requestId: tension
             temperature: 0.5
-            maxTokens: 4096
+            maxTokens: 8192
             messages:
               - role: system
                 content: >-
@@ -80,6 +80,7 @@ jobs:
                   unaddressedReason, marketInvariants (array of strings),
                   status ("active"|"dormant"), extractorVersion ("extract-weekly.v1").
                   Maximum 8 tensions. If nothing qualifies, output [].
+                  Output ONLY the JSON array — no analysis, no fences (fenced output is discarded).
               - role: user
                 content: ${{ data.latest("records", "render-observation").attributes.text }}
       - name: store
@@ -111,7 +112,7 @@ jobs:
           inputs:
             requestId: tension
             temperature: 0.5
-            maxTokens: 4096
+            maxTokens: 8192
             messages:
               - role: system
                 content: >-
@@ -142,6 +143,7 @@ jobs:
                   unaddressedReason, marketInvariants (array of strings),
                   status ("active"|"dormant"), extractorVersion ("extract-weekly.v1").
                   Maximum 8 tensions. If nothing qualifies, output [].
+                  Output ONLY the JSON array — no analysis, no fences (fenced output is discarded).
               - role: user
                 content: ${{ data.latest("records", "render-observation").attributes.text }}
       - name: store
