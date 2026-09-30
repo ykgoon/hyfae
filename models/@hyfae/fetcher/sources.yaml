@@ -90,4 +90,39 @@ globalArguments:
       market: VN
       artifactClasses: [workaround, queue]
       extract: json
+    # Regulatory exhaust v2 (Tier B): MySST sales-tax exemption feed — dated
+    # circulars with firm money path (manufacturers applying for exemption).
+    # Verified 200 2026-09-29 (26KB RSS, 11 items; NEWS 21/20 exemption +
+    # certificate items). RSS shape → extract text (lowyat precedent).
+    - name: mysst-sst-exemptions
+      url: https://mysst.customs.gov.my/feed/
+      tier: B
+      language: en
+      market: MY
+      artifactClasses: [policy_shift]
+      extract: text
+    # Hiring duct-tape (Tier A): Mudah Jobs MY — repeat/urgent-role ads with
+    # gaji bands + WhatsApp-apply (firm-as-actor labor signal). JobStreet and
+    # maukerja both 403 Cloudflare bot-wall 2026-09-29 — rejected. Mudah
+    # verified 200 2026-09-29 (546KB raw → 38k text; HIRING/gaji/immediate-
+    # hiring ads dense within 20k cap; category-nav boilerplate ~3k head).
+    - name: mudah-jobs-my
+      url: https://www.mudah.my/malaysia/jobs
+      tier: A
+      language: ms
+      market: MY
+      artifactClasses: [hire_ducttape]
+      extract: html
+    # Seller-side mirror (Tier A): TikTok Shop Seller Center MY reviews —
+    # seller return/refund + unresolved-ticket pain (firm-as-actor
+    # transaction). Shopee seller edu/help pages are JS shells (empty
+    # through fetcher) and Shopee Seller Center MY / GrabMerchant MY feeds
+    # have 0 entries — rejected. Verified 200 2026-09-29 (50 entries).
+    - name: appstore-reviews-tiktok-seller-my
+      url: https://itunes.apple.com/MY/rss/customerreviews/page=1/id=1591003012/sortby=mostrecent/json
+      tier: A
+      language: en
+      market: MY
+      artifactClasses: [workaround, queue]
+      extract: json
 methods: {}

@@ -9,7 +9,7 @@ extensions/models/
   fetcher.ts     @hyfae/fetcher  — Tier A/B collection + Tier C paste intake
   records.ts     @hyfae/records  — six record schemas, dead-letter, promoter, digest
 models/
-   sources/       source registry (9 SEA sources MY/ID/TH/VN/PH: regulators, app reviews, forum RSS; Tier A/B)
+   sources/       source registry (12 SEA sources MY/ID/TH/VN/PH: regulators + customs feed, app/seller reviews, forum + jobs board; Tier A/B)
   records/       the typed store instance
   llm-openrouter OpenRouter backend (key from vault llm-secrets)
   llm-local      OpenAI-compatible llama.cpp backend (grex-foxtrot:8090)

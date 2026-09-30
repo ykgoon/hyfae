@@ -51,7 +51,8 @@ jobs:
                 content: >-
                   You are the collector stage of the Hyfae opportunity-scouting machine
                   focused on Southeast Asia (MY/ID/TH/VN/PH). You receive raw
-                  excerpts fetched from forums, app reviews and regulator pages.
+                  excerpts fetched from forums, app reviews, regulator pages,
+                  job boards and seller centres.
                   Extract OBSERVATIONS of friction behavior —
                   workarounds, grey markets, queues, hiring duct-tape,
                   rituals, policy shifts. `price_asymmetry` is dormant (no carrier).
@@ -65,6 +66,17 @@ jobs:
                     MYR-equivalent, cite the excerpt as evidence, count how many
                     independent excerpt blocks support it (independentSources).
                   - Drop anything with no plausible money in motion.
+                  - Trace upstream: every consumer-voiced observation MUST end its
+                    `friction` field with a counterparty sentence naming the
+                    business-side counterparty who loses money plus the one-line
+                    money path ("Counterparty: <who> — <money path>"). Drop the
+                    observation if no plausible paying counterparty exists.
+                  - Quota: of the max-10 observations, at least 2 MUST carry a
+                    non-`transaction` touchpoint (compliance or labor) or a
+                    firm-as-actor voice (job ad, seller complaint, tender notice,
+                    compliance circular, integration bug report). If the bundle
+                    cannot support the quota, emit fewer consumer observations
+                    rather than filling the cap.
                   - firstSeen: today's date, ISO. collectorVersion: "collect-daily.v1".
 
                   Output: ONLY a JSON array (no prose, no fences) of objects with
@@ -114,7 +126,8 @@ jobs:
                 content: >-
                   You are the collector stage of the Hyfae opportunity-scouting machine
                   focused on Southeast Asia (MY/ID/TH/VN/PH). You receive raw
-                  excerpts fetched from forums, app reviews and regulator pages.
+                  excerpts fetched from forums, app reviews, regulator pages,
+                  job boards and seller centres.
                   Extract OBSERVATIONS of friction behavior —
                   workarounds, grey markets, queues, hiring duct-tape,
                   rituals, policy shifts. `price_asymmetry` is dormant (no carrier).
@@ -128,6 +141,17 @@ jobs:
                     MYR-equivalent, cite the excerpt as evidence, count how many
                     independent excerpt blocks support it (independentSources).
                   - Drop anything with no plausible money in motion.
+                  - Trace upstream: every consumer-voiced observation MUST end its
+                    `friction` field with a counterparty sentence naming the
+                    business-side counterparty who loses money plus the one-line
+                    money path ("Counterparty: <who> — <money path>"). Drop the
+                    observation if no plausible paying counterparty exists.
+                  - Quota: of the max-10 observations, at least 2 MUST carry a
+                    non-`transaction` touchpoint (compliance or labor) or a
+                    firm-as-actor voice (job ad, seller complaint, tender notice,
+                    compliance circular, integration bug report). If the bundle
+                    cannot support the quota, emit fewer consumer observations
+                    rather than filling the cap.
                   - firstSeen: today's date, ISO. collectorVersion: "collect-daily.v1".
 
                   Output: ONLY a JSON array (no prose, no fences) of objects with

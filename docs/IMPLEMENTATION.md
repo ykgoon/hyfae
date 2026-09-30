@@ -94,15 +94,45 @@ live-fetch verified HTTP 200 on 2026-09-21; smoke `collect
 | `appstore-reviews-gcash-ph` (Tier A, PH) | add | workaround, queue | transaction — login/verification failures blocking emergency money access |
 | `appstore-reviews-truemoney-th` (Tier A, TH) | add | workaround, queue | transaction — double-charge, top-up never arrives, 1000+ support queue, account blocks (verified 200 2026-09-21, 50 entries) |
 | `appstore-reviews-momo-vn` (Tier A, VN) | add | workaround, queue | transaction — forced negative-balance payment, unauthorized deductions, wrong-transfer no-support, OTP phone-change blocks (verified 200 2026-09-21, 50 entries) |
+| `mysst-sst-exemptions` → `https://mysst.customs.gov.my/feed/` (Tier B, `text`) | add | policy_shift | compliance — dated sales-tax exemption circulars (NEWS 21/20), manufacturers applying for exemption certificates (firm money path; verified 200 2026-09-29, 26KB RSS, 11 items) |
+| `mudah-jobs-my` → `https://www.mudah.my/malaysia/jobs` (Tier A, `html`) | add | hire_ducttape | labor — repeat/urgent-role ads with gaji bands + WhatsApp-apply (firm-as-actor hiring; verified 200 2026-09-29, 546KB raw → 38k text, signal dense within 20k cap) |
+| `appstore-reviews-tiktok-seller-my` (Tier A) | add | workaround, queue | transaction (firm-as-actor) — seller return/refund + 14–20-day unresolved-ticket pain (verified 200 2026-09-29, 50 entries) |
 
-Registry now covers 5 markets (MY/ID/TH/VN/PH); the collector prompt scope line
-reads MY/ID/TH/VN/PH to agree (synced in BOTH `extract-openrouter` and
-`extract-local` jobs). Smoke `collect --input provider=none` re-confirmed
-9-source fan-out green (TH/VN pages 200, 20k chars capped, verbatim Thai/Vietnamese
-friction). BNM showed one transient Cloudflare challenge
-(`Just a moment...`, 403) under rapid re-fetching; direct fetch stayed 200
-and the next run was 7/7 green — runtime failures remain non-fatal empty
-pages by contract.
+Non-consumer verdicts from the `broaden-collect-beyond-consumer` probes (all
+probed with curl 2026-09-29, HTTP status + excerpt recorded): winners span 3
+families (regulatory-exhaust-v2, hiring duct-tape, seller-side mirror), giving
+`hire_ducttape`/`labor` its first live carrier (`mudah-jobs-my`) and
+firm-as-actor transaction its carrier (`appstore-reviews-tiktok-seller-my`).
+Rejected: JobStreet + maukerja (403 Cloudflare bot-wall), Shopee Seller Centre
+edu/help (JS shell, empty through fetcher), Shopee Seller Center MY +
+GrabMerchant MY review feeds (0 entries), Grab merchant/blog pages (marketing
+fluff), DBKL licensing deep page (404), ePerolehan tender listings (behind
+login; portal home is nav-only), StackOverflow HTML (403; API `tagged=malaysia`
+0 items), SSM homepage (200 but generic SharePoint, weaker gravity than the
+MySST feed — backup). GitHub e-invoice-MY issue search (200 JSON, 160 results,
+dev duct-tape) passes the bar but was cut for the roster cap — documented
+backup family (build-trail). Collector prompt now carries the trace-upstream
+(`Counterparty:` sentence in `friction`, drop if none plausible) and quota
+(≥2 non-`transaction`/firm-as-actor of max 10, else emit fewer) rules, synced
+byte-identically in both `extract-openrouter` and `extract-local` jobs;
+`hire_ducttape`/`labor` stay advertised (live carrier), `price_asymmetry`
+stays dormant.
+
+Registry now covers 5 markets (MY/ID/TH/VN/PH) across 12 entries: 7 consumer
+end-user voices, 2 regulator pages, plus 3 firm-as-actor sources across 3
+non-consumer families (customs feed, job board, seller reviews); the collector
+prompt scope line reads MY/ID/TH/VN/PH to agree (synced in BOTH
+`extract-openrouter` and `extract-local` jobs). Smoke `collect
+--input provider=none` re-confirmed 12-source fan-out green 2026-09-29
+(mysst + mudah 20k chars capped non-empty; lowyat recovered 20k on re-run).
+Live quota check (provider=local path, llama.cpp on grex-foxtrot): 5 stored
+observations split 2 compliance / 2 labor / 1 transaction with 5/5
+`Counterparty:` sentences — quota holds, minority signal survives. Smoke data
+purged after. Two transient notes: all 6 iTunes feeds returned 0 entries
+through both curl and the fetcher for ~30 min (Apple-side throttle; the
+TikTok-seller URL showed 50 entries 15 min prior and behaves identically to
+the 5 proven feeds), and BNM flipped 200↔403 Cloudflare between runs; runtime
+failures remain non-fatal empty pages by contract.
 Deliberately excluded: English cliché surfaces (r/SaaS, HN) and Tier C walls
 (FB/Telegram) — the latter via manual `bin/inbox` only.
 
@@ -137,6 +167,18 @@ state persists in the `.swamp/` volume.
   requires a second provider instance per persona.
 - No per-stage token/cost budget enforcement; envelope is model choice + caps.
 - Probes are manual; card `probeResult` is operator-filled.
+- Stale `bundle` ghost row (2026-09-15 `collect-daily` era) lingers in the
+  query index after delete + GC, so `data.latest("sources", "bundle")` in the
+  `collect` workflow evaluates ambiguous and live (`provider=local`/`openrouter`)
+  runs fail at the extract step; `provider=none` is unaffected (guarded steps
+  skip evaluation). Live checks currently run the same steps manually
+  (fetch → `llm-local chat` → `records ingest_text`). Needs a swamp-side index
+  repair or a workflow CEL workaround in a follow-up.
+- Local Loop-1 output needs a type nudge: gemma emits `monthlyCostEst` as
+  quoted strings/ranges (`"50000"`, `"50000-500000"`, `"10000+"`), which the
+  zod number schema deadletters. Quota/trace-upstream behavior itself verifies
+  fine; a follow-up should either coerce in `ingest_text` or pin bare-number
+  JSON in the collector prompt.
 
 ## 7. docker-local-deployment (2026-09-22)
 
