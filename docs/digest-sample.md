@@ -1,40 +1,75 @@
-# Hyfae Weekly — 2026-W37
+# Hyfae Weekly — SAMPLE-W01
 
-2 card(s) promoted (cap 3). 0 archived to graveyard.
+2 promoted (cap 3). 0 archived.
 
-## syn-test-001
+## syn-vertical-sample
 
-**Hook:** Pooled settlement-queue dashboard that predicts DuitNow payout delays for marketplace sellers and auto-reconciles COD spreadsheets
+Who hurts: Small Shopee sellers
 
-**Evidence:**
-- Unawareness (affirmative): dispersed across sellers, normalized as cost of selling
-- Durability: 200k sellers x RM100/mo plausible
-- Prior art found: ["vendor A payouts tool"]
+Vertical: Small Shopee sellers · MY · via Seller centre reviews
 
-**Panel disagreement:** plausible workflow fit | clear WTP | habitual nightly pain | API access risk
+What breaks: Payouts stall for days and the release status stays invisible
 
-**What you'd have to believe:** needs marketplace API access
+Money: Small Shopee sellers — ~RM2,400/mo (transaction; Review describes weekly stalled payouts and stuck funds)
 
-**Feedback (copy-paste):**
-```
-swamp model @hyfae/records method run records ingest --input kind=feedback --input 'records=[{"id":"fb-syn-test-001","cardId":"card-syn-test-001","decision":"dismiss","reason":"<140 chars>","assumptionBroken":false,"at":"2026-09-15T01:29:19.964Z"}]'
-```
+What to sell: A weekly payout-stall alert naming the stuck amount and recovery step
 
-## syn-test-003
+Why now: Instant-transfer rails opened to marketplaces (2025-06-01)
 
-**Hook:** Corridor price comparison for crypto on/off ramps in SEA with premium alerts
+Why nobody did it: Banks serve large merchants first and small sellers fall below sales thresholds
 
-**Evidence:**
-- Unawareness (affirmative): traders normalise premium spread
-- Durability: active trader niche, 20+ customers at RM100
-- Prior art found: []
+Proof: "Payouts stall every week and sellers cannot see the release date."
 
-**Panel disagreement:** needs data plumbing | edge decays fast | alert fatigue risk | exchange ToS
+Next step: Speak to 3 small Shopee sellers about "A weekly payout-stall alert naming the stuck amount and recovery step" this week; log the decision in the weekly review.
 
-**What you'd have to believe:** data access
+Trace: syn-vertical-sample → ten-vertical-sample → obs-vertical-sample
 
-**Feedback (copy-paste):**
-```
-swamp model @hyfae/records method run records ingest --input kind=feedback --input 'records=[{"id":"fb-syn-test-003","cardId":"card-syn-test-003","decision":"dismiss","reason":"<140 chars>","assumptionBroken":false,"at":"2026-09-15T01:29:19.964Z"}]'
-```
+### Operator notes
+
+2 similar tries: Payout dashboard startup; Bank alert SMS
+
+Operator: Worth testing
+Economist: Plausible
+Behaviorist: Pain is real
+Skeptic: API risk
+
+Sources: https://example.com/seller-payout-reviews
+
+Feedback: `bin/feedback syn-vertical-sample escalate|dismiss "reason"`
+
+
+## syn-vertical-partial
+
+Who hurts: unknown
+
+Vertical: unknown
+
+What breaks: unknown
+
+Money: unknown
+
+What to sell: A weekly price-watch note naming the rival move and response (borrowed from Competitive intelligence platforms)
+
+Why now: unknown
+
+Why nobody did it: Hyper-local pricing data is costly to collect
+
+Proof: unknown
+
+Next step: Speak to three likely buyers about "A weekly price-watch note naming the rival move and response" this week; log the decision in the weekly review.
+
+Trace: partial (synthesis syn-vertical-partial; 0/1 tensions, 0 observations joined)
+
+### Operator notes
+
+1 similar tries: Competitive intelligence platform
+
+Operator: —
+Economist: —
+Behaviorist: —
+Skeptic: —
+
+Sources: unknown
+
+Feedback: `bin/feedback syn-vertical-partial escalate|dismiss "reason"`
 

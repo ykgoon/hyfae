@@ -140,6 +140,13 @@ jobs:
                   panel {operator, economist, behaviorist, skeptic, convergedObvious}.
 
 
+                  Also emit structured buyer facts inside falsification:
+                  priceTest {seats (number, e.g. 20), priceRM (number, e.g. 100),
+                  who (concrete payer type)}, firstBuyers (array of 3 concrete
+                  buyer types for the first 20 sales), wedge (one sentence: the
+                  smallest sellable thing).
+
+
                   Output: ONLY a JSON array of the SAME synthesis objects with
                   falsification and panel filled in. Keep all other fields
                   unchanged. If input was empty, output [].
@@ -263,6 +270,13 @@ jobs:
                   panel {operator, economist, behaviorist, skeptic, convergedObvious}.
 
 
+                  Also emit structured buyer facts inside falsification:
+                  priceTest {seats (number, e.g. 20), priceRM (number, e.g. 100),
+                  who (concrete payer type)}, firstBuyers (array of 3 concrete
+                  buyer types for the first 20 sales), wedge (one sentence: the
+                  smallest sellable thing).
+
+
                   Output: ONLY a JSON array of the SAME synthesis objects with
                   falsification and panel filled in. Keep all other fields
                   unchanged. If input was empty, output [].
@@ -299,5 +313,7 @@ jobs:
           methodName: promote
           inputs:
             candidates: ${{ data.findBySpec("records", "synthesis") }}
+            tensions: ${{ data.findBySpec("records", "tension") }}
+            observations: ${{ data.findBySpec("records", "observation") }}
             week: ${{ inputs.week }}
 version: 1

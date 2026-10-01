@@ -89,6 +89,13 @@ export const SynthesisSchema = z.object({
     unawarenessNegative: z.string().describe("Someone-would-have-built-it sweep result"),
     durability: z.string().describe("Too big to be trivial AND too invisible to be competed?"),
     verdict: z.enum(["alive", "mirage"]),
+    priceTest: z.object({
+      seats: z.number().int().positive().optional(),
+      priceRM: z.number().min(0).optional(),
+      who: z.string().optional(),
+    }).default({}).describe("Price plausibility as numbers: seats x priceRM for who"),
+    firstBuyers: z.array(z.string()).default([]).describe("First-20-buyers sketch: concrete buyer types"),
+    wedge: z.string().default("").describe("Smallest sellable thing, one sentence"),
   }),
   panel: z
     .object({
@@ -118,6 +125,10 @@ export const CardSchema = z.object({
   believe: z.string().describe("What you would have to believe"),
   week: z.string().describe("ISO week label, e.g. 2026-W37"),
   status: z.enum(["promoted", "escalated", "dismissed"]).default("promoted"),
+  whoPays: z.string().default("").describe("Reader display: who pays, plain words"),
+  painRM: z.string().default("").describe("Reader display: money size line, e.g. ~RM2,400/mo"),
+  whyNow: z.string().default("").describe("Reader display: enabling shift in plain words"),
+  offering: z.string().default("").describe("Reader display: smallest sellable thing"),
 });
 
 export const GraveyardSchema = z.object({
@@ -413,6 +424,28 @@ function isoWeekLabel(d: Date): string {
   return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
+/** Plain-language helpers for the reader-first digest (no machine jargon). */
+function plainStr(v: unknown, max = 200): string {
+  if (typeof v !== "string") return "";
+  return v.trim().replace(/\s+/g, " ").slice(0, max);
+}
+
+function sentenceCase(s: string): string {
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function shortenPriorArtName(s: string): string {
+  const t = s.trim().replace(/\s+/g, " ");
+  const cut = t.split(" (")[0].split(" — ")[0].split(" - ")[0];
+  return cut.trim().slice(0, 80) || t.slice(0, 80);
+}
+
+function formatRM(n: number): string {
+  if (!Number.isFinite(n)) return "unknown";
+  return `~RM${Math.round(n).toLocaleString("en-MY")}/mo`;
+}
+
 /**
  * `@hyfae/records` model definition — validated append-only store, promoter,
  * and digest renderer.
@@ -570,14 +603,31 @@ export const model = {
         candidates: z
           .array(z.unknown())
           .describe("data.findBySpec('records','synthesis') output"),
+        tensions: z
+          .array(z.unknown())
+          .default([])
+          .describe("data.findBySpec('records','tension') output for upstream join"),
+        observations: z
+          .array(z.unknown())
+          .default([])
+          .describe("data.findBySpec('records','observation') output for upstream join"),
         week: z.string().default("").describe("ISO week label; defaults to current"),
       }),
       execute: async (
-        args: { candidates: unknown[]; week: string },
+        args: { candidates: unknown[]; tensions?: unknown[]; observations?: unknown[]; week: string },
         context: RecContext,
       ): Promise<{ dataHandles: Array<{ name: string }> }> => {
         const week = args.week || isoWeekLabel(new Date());
         const cap = context.globalArgs.maxCardsPerWeek;
+
+        const tensionById = new Map<string, Record<string, unknown>>();
+        for (const t of (args.tensions ?? []).map(unwrap)) {
+          if (t.id && typeof t.id === "string") tensionById.set(t.id, t);
+        }
+        const obsById = new Map<string, Record<string, unknown>>();
+        for (const o of (args.observations ?? []).map(unwrap)) {
+          if (o.id && typeof o.id === "string") obsById.set(o.id, o);
+        }
 
         const alive = args.candidates
           .map(unwrap)
@@ -595,6 +645,124 @@ export const model = {
         const demoted = ranked.slice(cap);
         const names: string[] = [];
 
+        type ReaderView = {
+          whoHurts: string;
+          vertical: string;
+          whatBreaks: string;
+          money: string;
+          whatToSell: string;
+          whyNow: string;
+          whyGap: string;
+          proof: string;
+          nextStep: string;
+          trace: string;
+          partial: boolean;
+          obsIds: string[];
+          tensionIds: string[];
+          sourceRefs: string[];
+        };
+
+        function buildReader(s: Record<string, unknown>): ReaderView {
+          const tensionIds = Array.isArray(s.tensionIds)
+            ? (s.tensionIds as unknown[]).filter((x): x is string => typeof x === "string")
+            : [];
+          const tensionsResolved = tensionIds
+            .map((id) => tensionById.get(id))
+            .filter((t): t is Record<string, unknown> => Boolean(t));
+          const expectedObsIds = tensionsResolved.flatMap((t) =>
+            Array.isArray(t.observationIds)
+              ? (t.observationIds as unknown[]).filter((x): x is string => typeof x === "string")
+              : []
+          );
+          const obsResolved = expectedObsIds
+            .map((id) => obsById.get(id))
+            .filter((o): o is Record<string, unknown> => Boolean(o));
+          const firstTension = tensionsResolved[0];
+          const firstObs = obsResolved[0];
+          const fals = (s.falsification as Record<string, unknown>) ?? {};
+          const priceTest = (fals.priceTest as Record<string, unknown> | undefined) ?? {};
+          const wedge = plainStr(fals.wedge, 140);
+          const mechanism = plainStr(s.mechanism, 200);
+          const mechanismDomain = plainStr(s.mechanismSourceDomain, 80);
+
+          const partial = tensionsResolved.length !== tensionIds.length ||
+            (tensionsResolved.length > 0 && obsResolved.length === 0);
+
+          // Who hurts — buyer in plain words.
+          const rawBuyer = plainStr((firstObs as Record<string, unknown> | undefined)?.actor, 80) ||
+            plainStr(firstTension?.costBearer, 80) ||
+            plainStr(priceTest.who, 80);
+          const whoHurts = rawBuyer ? sentenceCase(rawBuyer) : "unknown";
+
+          // Vertical — buyer population plus evidence-bound source/market context.
+          const firstBuyer = Array.isArray(fals.firstBuyers)
+            ? (fals.firstBuyers as unknown[]).find((x): x is string => typeof x === "string" && x.trim().length > 0) ?? ""
+            : "";
+          const verticalBuyer = whoHurts !== "unknown" ? whoHurts : firstBuyer ? sentenceCase(firstBuyer.trim()) : "unknown";
+          const marketBit = plainStr((firstObs as Record<string, unknown> | undefined)?.market, 20);
+          const sourceBit = plainStr((firstObs as Record<string, unknown> | undefined)?.sourceName, 80);
+          const vertical = verticalBuyer === "unknown" && !marketBit && !sourceBit
+            ? "unknown"
+            : [verticalBuyer, marketBit, sourceBit ? `via ${sourceBit}` : ""].filter(Boolean).join(" · ");
+
+          // What breaks — behavioral friction.
+          const rawBreaks = plainStr((firstObs as Record<string, unknown> | undefined)?.friction, 200) ||
+            (firstObs ? [plainStr((firstObs as Record<string, unknown>).workflow, 120), plainStr((firstObs as Record<string, unknown>).friction, 120)].filter(Boolean).join(" — ") : "") ||
+            plainStr(firstTension?.reality, 200);
+          const whatBreaks = rawBreaks || "unknown";
+
+          // Money — one number per line from observation gravity, else price plausibility.
+          let money = "unknown";
+          const gravity = (firstObs as Record<string, unknown> | undefined)?.gravity as Record<string, unknown> | undefined;
+          if (gravity && typeof gravity.monthlyCostEst === "number") {
+            const touch = typeof gravity.touchpoint === "string" ? gravity.touchpoint : "";
+            const cue = plainStr(gravity.evidence, 80);
+            const buyerBit = whoHurts === "unknown" ? "Someone pays" : whoHurts;
+            money = `${buyerBit} — ${formatRM(gravity.monthlyCostEst)}${touch ? ` (${touch}` : ""}${touch && cue ? `; ${cue}` : cue && !touch ? ` (${cue}` : ""}${touch || cue ? ")" : ""}`;
+          } else if (typeof priceTest.priceRM === "number") {
+            const seats = typeof priceTest.seats === "number" ? ` x ${priceTest.seats} seats` : "";
+            const whoBit = plainStr(priceTest.who, 60) || whoHurts;
+            money = `${whoBit} — ${formatRM(priceTest.priceRM)}${seats} (plausibility check)`;
+          }
+
+          // What to sell — smallest sellable thing.
+          const whatToSell = wedge ||
+            (mechanism ? `${mechanism.slice(0, 140)}${mechanismDomain ? ` (borrowed from ${mechanismDomain})` : ""}` : "unknown");
+
+          // Why now — enabling shift in plain words.
+          const shift = (firstTension?.enablingShift as Record<string, unknown> | undefined);
+          const shiftWhat = plainStr(shift?.whatChanged, 140);
+          const shiftDate = plainStr(shift?.date, 20);
+          const whyNow = shiftWhat ? `${sentenceCase(shiftWhat)}${shiftDate ? ` (${shiftDate})` : ""}` : "unknown";
+
+          // Why nobody did it — gap reason.
+          const whyGap = plainStr(firstTension?.unaddressedReason, 200) ||
+            plainStr(fals.structuralBarriers, 200) ||
+            "unknown";
+
+          // Proof — one verbatim quote, truncated.
+          const excerpt = plainStr((firstObs as Record<string, unknown> | undefined)?.rawExcerpt, 200);
+          const proof = excerpt ? `"${excerpt}"` : "unknown";
+
+          // Next step — plain action, no machine commands in reader view.
+          const buyerShort = whoHurts === "unknown" ? "three likely buyers" : `3 ${whoHurts.charAt(0).toLowerCase() + whoHurts.slice(1)}`;
+          const offerShort = (wedge || mechanism).slice(0, 80) || "the idea";
+          const nextStep = `Speak to ${buyerShort} about "${offerShort}" this week; log the decision in the weekly review.`;
+
+          const obsIds = obsResolved.map((o) => String(o.id));
+          const sourceRefs = obsResolved.map((o) => String((o as Record<string, unknown>).sourceRef ?? "")).filter(Boolean);
+          const trace = partial
+            ? `Trace: partial (synthesis ${String(s.id)}; ${tensionsResolved.length}/${tensionIds.length} tensions, ${obsResolved.length} observations joined)`
+            : `Trace: ${String(s.id)} → ${tensionIds.join(", ") || "—"} → ${obsIds.join(", ") || "—"}`;
+
+          return { whoHurts, vertical, whatBreaks, money, whatToSell, whyNow, whyGap, proof, nextStep, trace, partial, obsIds, tensionIds, sourceRefs };
+        }
+
+        const readerBySyn = new Map<string, ReaderView>();
+        for (const s of promoted) {
+          readerBySyn.set(String(s.id), buildReader(s));
+        }
+
         for (const s of promoted) {
           const cardId = `card-${(s.id as string) ?? "unknown"}`;
           const panel = (s.panel as Record<string, unknown> | undefined) ?? {};
@@ -602,6 +770,7 @@ export const model = {
             .filter((x) => typeof x === "string" && x.length > 0)
             .join(" | ");
           const fals = (s.falsification as Record<string, unknown>) ?? {};
+          const reader = readerBySyn.get(String(s.id))!;
           const card = {
             id: cardId,
             synthesisId: String(s.id ?? "unknown"),
@@ -615,6 +784,10 @@ export const model = {
             believe: String(fals.structuralBarriers ?? "").slice(0, 400),
             week,
             status: "promoted",
+            whoPays: reader.whoHurts.slice(0, 200),
+            painRM: reader.money.slice(0, 200),
+            whyNow: reader.whyNow.slice(0, 200),
+            offering: reader.whatToSell.slice(0, 280),
           };
           const parsed = CardSchema.safeParse(card);
           if (!parsed.success) {
@@ -648,34 +821,60 @@ export const model = {
           ], context);
         }
 
-        // Weekly digest markdown — the only human surface.
+        // Weekly digest markdown — reader view first, operator appendix second.
         const lines: string[] = [
           `# Hyfae Weekly — ${week}`,
           "",
-          `${promoted.length} card(s) promoted (cap ${cap}). ${demoted.length} archived to graveyard.`,
+          `${promoted.length} promoted (cap ${cap}). ${demoted.length} archived.`,
           "",
         ];
         for (const s of promoted) {
+          const reader = readerBySyn.get(String(s.id))!;
           const fals = (s.falsification as Record<string, unknown>) ?? {};
           const panel = (s.panel as Record<string, unknown> | undefined) ?? {};
+          const priorArt = Array.isArray(fals.priorArt) ? (fals.priorArt as unknown[]).filter((x): x is string => typeof x === "string") : [];
+          const priorPlain = priorArt.map(shortenPriorArtName).filter(Boolean);
+          const panelLines = [
+            `Operator: ${plainStr(panel.operator, 200) || "—"}`,
+            `Economist: ${plainStr(panel.economist, 200) || "—"}`,
+            `Behaviorist: ${plainStr(panel.behaviorist, 200) || "—"}`,
+            `Skeptic: ${plainStr(panel.skeptic, 200) || "—"}`,
+          ];
           lines.push(
             `## ${s.id}`,
             "",
-            `**Hook:** ${s.mechanism}`,
+            `Who hurts: ${reader.whoHurts}`,
             "",
-            `**Evidence:**`,
-            `- Unawareness (affirmative): ${fals.unawarenessAffirmative ?? "—"}`,
-            `- Durability: ${fals.durability ?? "—"}`,
-            `- Prior art found: ${JSON.stringify(fals.priorArt ?? [])}`,
+            `Vertical: ${reader.vertical}`,
             "",
-            `**Panel disagreement:** ${[panel.operator, panel.economist, panel.behaviorist, panel.skeptic].filter(Boolean).join(" | ") || "—"}`,
+            `What breaks: ${reader.whatBreaks}`,
             "",
-            `**What you'd have to believe:** ${fals.structuralBarriers ?? "—"}`,
+            `Money: ${reader.money}`,
             "",
-            `**Feedback (copy-paste):**`,
-            "```",
-            `swamp model @hyfae/records method run records ingest --input kind=feedback --input 'records=[{"id":"fb-${String(s.id).slice(0, 20)}","cardId":"card-${String(s.id).slice(0, 20)}","decision":"dismiss","reason":"<140 chars>","assumptionBroken":false,"at":"${new Date().toISOString()}"}]'`,
-            "```",
+            `What to sell: ${reader.whatToSell}`,
+            "",
+            `Why now: ${reader.whyNow}`,
+            "",
+            `Why nobody did it: ${reader.whyGap}`,
+            "",
+            `Proof: ${reader.proof}`,
+            "",
+            `Next step: ${reader.nextStep}`,
+            "",
+            `${reader.trace}`,
+            "",
+            `### Operator notes`,
+            "",
+            priorPlain.length > 0
+              ? `${priorPlain.length} similar tries: ${priorPlain.join("; ")}`
+              : `0 similar tries found`,
+            "",
+            ...panelLines,
+            "",
+            reader.sourceRefs.length > 0 ? `Sources: ${reader.sourceRefs.join("; ")}` : `Sources: ${reader.partial ? "unknown" : "—"}`,
+            "",
+            `Feedback: \`bin/feedback ${String(s.id)} escalate|dismiss "reason"\``,
+            "",
             "",
           );
         }
